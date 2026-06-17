@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Plot Twist POS</title>
+<!-- Brand font loaded as a real <link>, not @import — @import only works if it's the very first
+     rule in a stylesheet, and one extra rule above it is enough for browsers to silently drop it.
+     A <link> here always loads, so the wordmark renders identically on every device. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Anton&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -203,8 +209,6 @@
   }
 
   /* AUTH SCREEN */
-  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Anton&display=swap');
-
   .auth-screen {
     display: none; position: fixed; inset: 0; z-index: 500;
     align-items: center; justify-content: center; flex-direction: column; padding: 24px;
@@ -468,6 +472,10 @@
 <div class="page" id="page-stall1">
   <div class="page-header">🥗 Food Stall</div>
   <div class="page-header-sub">Tap item → confirm to record sale</div>
+  <div class="card" style="text-align:center">
+    <div class="section-title" style="justify-content:center"><span class="live-dot"></span>Total Items Sold — Food Stall</div>
+    <div class="revenue-big" id="stall1-total-sold" style="color:var(--orange)">0</div>
+  </div>
   <div class="card">
     <div class="section-title"><span class="dot"></span>Crunch Attacks</div>
     <div class="item-list" id="food-crunch"></div>
@@ -490,6 +498,10 @@
 <div class="page" id="page-stall2">
   <div class="page-header">🎲 Quest Stall</div>
   <div class="page-header-sub">Tap to record games, rewards & coupons issued</div>
+  <div class="card2" style="text-align:center">
+    <div class="section-title" style="justify-content:center"><span class="live-dot"></span>Total Items Sold — Quest Stall</div>
+    <div class="revenue-big" id="stall2-total-sold" style="color:#a78bfa">0</div>
+  </div>
   <div class="card2">
     <div class="section-title"><span class="dot" style="background:var(--gold)"></span>Games Played</div>
     <div class="item-list" id="quest-games"></div>
@@ -749,15 +761,26 @@ function getUsers() {
 }
 function saveUsers(u) { store.set('pt_users', JSON.stringify(u)); cloudPush('pt_users'); }
 
+// Session — keeps the logged-in user across page refreshes until they explicitly log out
+function getSession() {
+  try { return JSON.parse(store.get('pt_session') || 'null'); }
+  catch { return null; }
+}
+function saveSession(user) { store.set('pt_session', JSON.stringify(user)); }
+function clearSession() { store.remove('pt_session'); }
+
 let currentUser = null; // { id, username, role }
 
 function authInit() {
   const users = getUsers();
-  if (users.length === 0) {
-    showSetupScreen();
-  } else {
-    showLoginScreen();
+  if (users.length === 0) { showSetupScreen(); return; }
+  const session = getSession();
+  if (session) {
+    const stillValid = users.find(u => u.id === session.id);
+    if (stillValid) { doLogin({ id: stillValid.id, username: stillValid.username, role: stillValid.role }); return; }
+    clearSession(); // account was removed/changed elsewhere while this device was logged in
   }
+  showLoginScreen();
 }
 
 // ---- SETUP SCREEN (first run, create admin) ----
@@ -827,6 +850,7 @@ function attemptLogin() {
 
 function doLogin(user) {
   currentUser = user;
+  saveSession(user);
   document.getElementById('auth-screen').classList.remove('visible');
   // Update user bar
   const bar = document.getElementById('user-bar');
@@ -843,6 +867,7 @@ function doLogin(user) {
 
 function logout() {
   currentUser = null;
+  clearSession();
   // hide everything
   document.getElementById('user-bar').classList.remove('visible');
   document.getElementById('main-nav').style.display = 'none';
@@ -1206,12 +1231,20 @@ function renderFood() {
   renderItemRow('food-chaat', FOOD_ITEMS.chaat);
   renderItemRow('food-specials', FOOD_ITEMS.specials);
   renderItemRow('food-drinks', FOOD_ITEMS.drinks);
+  updateStallTotal('stall1');
 }
 function renderQuest() {
   renderItemRow('quest-games', QUEST_ITEMS.games, 'game');
   renderItemRow('quest-collectibles', QUEST_ITEMS.collectibles, 'collectible');
   renderItemRow('quest-rewards', QUEST_ITEMS.rewards, 'reward');
   renderItemRow('quest-coupons', QUEST_ITEMS.coupons, 'coupon');
+  updateStallTotal('stall2');
+}
+function updateStallTotal(stall) {
+  // Reuses the same counting logic as the admin stats (calcStats) so the number
+  // shown here always matches what the admin sees, just placed where staff can see it live.
+  const el = document.getElementById(stall + '-total-sold');
+  if (el) el.textContent = calcStats(stall).transactions;
 }
 
 // ============================================================
@@ -1537,7 +1570,7 @@ function renderAdmin() {
     <div class="section-title"><span class="dot"></span>${adminTab==='all'?'Combined Total':adminTab==='stall1'?'🥗 Food Stall':'🎲 Quest Stall'}</div>
     <div class="stat-grid">
       <div class="stat-box wide"><div class="stat-label">Total Revenue (after discounts)</div><div class="revenue-big">₹${revenue}</div></div>
-      <div class="stat-box"><div class="stat-label">Transactions</div><div class="stat-val orange">${transactions}</div></div>
+      <div class="stat-box"><div class="stat-label">🛒 Total Items Sold</div><div class="stat-val orange">${transactions}</div></div>
       <div class="stat-box"><div class="stat-label">Coupons Saved</div><div class="stat-val purple">₹${couponsSaved}</div></div>
       <div class="stat-box"><div class="stat-label">Gross Revenue</div><div class="stat-val">${revenue+couponsSaved}</div></div>
       ${hasCost ? `<div class="stat-box"><div class="stat-label">💸 Sold Cost (total)</div><div class="stat-val red">₹${totalCost}</div></div>` : ''}
@@ -1557,8 +1590,8 @@ function renderAdmin() {
         <div class="stat-box"><div class="stat-label">🎲 Quest Revenue</div><div class="stat-val orange">₹${s2.revenue}</div></div>
         ${s1.profit !== null ? `<div class="stat-box"><div class="stat-label">🥗 Food Profit</div><div class="stat-val ${s1.profit>=0?'cyan':'red'}">₹${s1.profit}</div></div>` : ''}
         ${s2.profit !== null ? `<div class="stat-box"><div class="stat-label">🎲 Quest Profit</div><div class="stat-val ${s2.profit>=0?'cyan':'red'}">₹${s2.profit}</div></div>` : ''}
-        <div class="stat-box"><div class="stat-label">🥗 Food Sales</div><div class="stat-val">${s1.transactions}</div></div>
-        <div class="stat-box"><div class="stat-label">🎲 Quest Sales</div><div class="stat-val">${s2.transactions}</div></div>
+        <div class="stat-box"><div class="stat-label">🥗 Food Items Sold</div><div class="stat-val">${s1.transactions}</div></div>
+        <div class="stat-box"><div class="stat-label">🎲 Quest Items Sold</div><div class="stat-val">${s2.transactions}</div></div>
       </div>
     </div>`;
   }
@@ -1675,12 +1708,12 @@ function doReset(type) {
     cloudDelete('pt_sales');
     cloudDelete('pt_costs');
     cloudDelete('pt_inventory');
-    // Sweep any other pt_ keys except pt_users
+    // Sweep any other pt_ keys except pt_users and pt_session (this reset keeps the user logged in)
     try {
       const keysToDelete = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith('pt_') && k !== 'pt_users') keysToDelete.push(k);
+        if (k && k.startsWith('pt_') && k !== 'pt_users' && k !== 'pt_session') keysToDelete.push(k);
       }
       keysToDelete.forEach(k => localStorage.removeItem(k));
     } catch(e) {}
@@ -1709,6 +1742,7 @@ function doReset(type) {
 
     // Log out and go back to fresh setup
     currentUser = null;
+    clearSession();
     document.getElementById('user-bar').classList.remove('visible');
     document.getElementById('main-nav').style.display = 'none';
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -2184,7 +2218,7 @@ Object.assign(window, {
   showPage, doSetup, attemptLogin, logout,
   setAdminSubTab, setAdminTab, downloadBusinessPDF,
   initResetConfirm, doReset, cancelReset,
-  toggleCostLock, saveCostPrices, toggleInvLock, saveInventory,
+  toggleCostLock, saveCostPrices, toggleInvLock, saveInventory, updateInvTotal,
   closeModal, closeModalOutside, confirmModal, toggleCoupon, updateCouponUI,
   addNewUser, startEditUser, saveUserEdit, cancelUserEdit, deleteUser,
 });
