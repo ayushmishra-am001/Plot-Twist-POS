@@ -1,0 +1,3485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Plot Twist POS</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23ffffff%27%2F%3E%3Cstop%20offset%3D%270.55%27%20stop-color%3D%27%23f5c842%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23e8600a%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%27100%27%20height%3D%27100%27%20rx%3D%2718%27%20fill%3D%27%230d0d0d%27%2F%3E%3Ctext%20x%3D%2750%27%20y%3D%2774%27%20font-family%3D%27Arial%2C%20sans-serif%27%20font-size%3D%2766%27%20font-weight%3D%27900%27%20text-anchor%3D%27middle%27%20fill%3D%27url%28%23g%29%27%3EP%3C%2Ftext%3E%3C%2Fsvg%3E">
+<!-- Brand font loaded as a real <link>, not @import — @import only works if it's the very first
+     rule in a stylesheet, and one extra rule above it is enough for browsers to silently drop it.
+     A <link> here always loads, so the wordmark renders identically on every device. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Anton&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --card: #1a1208;
+    --card2: #120d1a;
+    --orange: #e8600a;
+    --gold: #f5c842;
+    --green: #2ecc71;
+    --purple: #7c3aed;
+    --red: #e53e3e;
+    --text: #f5ead5;
+    --muted: #a89070;
+    --border: #3a2a10;
+    --border2: #2a1a3a;
+    --confirm: #16a34a;
+    --cancel: #dc2626;
+    --profit: #22d3ee;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; overflow-x: hidden; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+
+  /* NAV */
+  .nav { display: flex; background: #0a0a0a; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 100; }
+  .nav-btn { flex: 1; padding: 12px 4px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); border: none; background: none; cursor: pointer; transition: color .15s; border-bottom: 3px solid transparent; }
+  .nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .nav-btn .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+  /* PAGES */
+  .page { display: none; padding: 12px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .card2 { background: var(--card2); border: 1px solid var(--border2); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .section-title { font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .section-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
+
+  /* STAT GRID */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-box { background: #0a0704; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .stat-box.wide { grid-column: 1/-1; }
+  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .stat-val { font-size: 22px; font-weight: 800; color: var(--gold); line-height: 1.1; }
+  .stat-val.green { color: var(--green); }
+  .stat-val.orange { color: var(--orange); }
+  .stat-val.purple { color: #a78bfa; }
+  .stat-val.cyan { color: var(--profit); }
+  .stat-val.red { color: var(--red); }
+  .revenue-big { font-size: 32px; font-weight: 900; color: var(--green); }
+
+  /* ITEM ROWS */
+  .item-list { display: flex; flex-direction: column; gap: 6px; }
+  .item-row { display: flex; align-items: center; background: #0a0704; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; gap: 10px; cursor: pointer; transition: border-color .1s, background .1s; user-select: none; }
+  .item-row:active { background: #1a1005; border-color: var(--orange); }
+  .item-row .item-name { flex: 1; font-size: 14px; font-weight: 600; line-height: 1.2; }
+  .item-row .item-sub { font-size: 11px; color: var(--muted); }
+  .item-row .item-price { font-size: 13px; color: var(--gold); font-weight: 700; white-space: nowrap; }
+  .item-row .item-count { font-size: 20px; font-weight: 800; color: var(--orange); min-width: 32px; text-align: right; }
+  .item-row.game { border-left: 3px solid var(--gold); }
+  .item-row.collectible { border-left: 3px solid var(--purple); }
+  .item-row.coupon { border-left: 3px solid var(--green); }
+  .item-row.reward { border-left: 3px solid var(--orange); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card); border: 2px solid var(--border); border-radius: 20px 20px 0 0; width: 100%; max-width: 600px; padding: 20px 16px 30px; animation: slideUp .2s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-title { font-size: 18px; font-weight: 800; color: var(--gold); margin-bottom: 4px; }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .modal-count-row { display: flex; align-items: center; justify-content: space-between; background: #0a0704; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+  .modal-count-label { font-size: 13px; color: var(--muted); }
+  .modal-count-val { font-size: 36px; font-weight: 900; color: var(--orange); }
+  .coupon-toggle { display: flex; align-items: center; gap: 12px; background: #0a0a04; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; cursor: pointer; user-select: none; }
+  .coupon-toggle input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--green); cursor: pointer; }
+  .coupon-toggle-label { font-size: 14px; font-weight: 600; }
+  .coupon-toggle-sub { font-size: 11px; color: var(--muted); }
+  .coupon-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .coupon-opt { background: #0a0704; border: 2px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; font-weight: 700; font-size: 14px; transition: border-color .1s, background .1s; }
+  .coupon-opt.selected { border-color: var(--green); background: #0a1a0a; color: var(--green); }
+  .coupon-opt .valid-on { font-size: 10px; color: var(--muted); font-weight: 400; }
+  .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn { padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; letter-spacing: .5px; }
+  .btn-confirm { background: var(--confirm); color: #fff; }
+  .btn-cancel { background: #1a0a0a; color: var(--muted); border: 1px solid #3a1a1a; }
+  .btn:active { opacity: .8; transform: scale(.97); }
+  .drink-selector-wrap { margin-bottom: 16px; }
+  .drink-selector-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+  .drink-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .drink-opt { background: #0a0704; border: 2px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; font-weight: 700; font-size: 13px; transition: border-color .1s, background .1s; line-height: 1.3; }
+  .drink-opt.selected { border-color: var(--orange); background: #1a0d00; color: var(--gold); }
+  .drink-required-hint { font-size: 11px; color: var(--red); margin-top: 6px; display: none; }
+  .drink-required-hint.show { display: block; }
+
+  /* ADMIN */
+  .stall-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .stall-tab { padding: 8px 14px; border-radius: 20px; background: #1a1208; border: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 700; cursor: pointer; }
+  .stall-tab.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-right: 6px; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+  .admin-item-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1a1208; }
+  .admin-item-row:last-child { border-bottom: none; }
+  .admin-item-name { font-size: 13px; font-weight: 600; }
+  .admin-item-count { font-size: 16px; font-weight: 800; color: var(--orange); }
+  .admin-item-rev { font-size: 12px; color: var(--gold); }
+
+  /* RESET BUTTONS */
+  .reset-section { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
+  .reset-btn-sales { background: #1a1000; border: 1px solid #6b4200; color: #f59e0b; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%; text-align: left; }
+  .reset-btn-sales:active { opacity: .8; }
+  .reset-btn-full { background: #1a0a0a; border: 1px solid #7a1a1a; color: #f87171; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%; text-align: left; }
+  .reset-btn-full:active { opacity: .8; }
+  .reset-desc { font-size: 10px; font-weight: 400; color: var(--muted); display: block; margin-top: 2px; }
+  .reset-confirm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+  .reset-yes { background: var(--cancel); color: #fff; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 800; border: none; cursor: pointer; }
+  .reset-no  { background: #222; color: var(--muted); padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; }
+
+  /* COST PRICE SECTION */
+  .cp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .cp-lock-btn { display: flex; align-items: center; gap: 6px; background: #1a1208; border: 1px solid var(--border); color: var(--muted); padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .cp-lock-btn.unlocked { border-color: var(--orange); color: var(--orange); background: #1a0d00; }
+  .cp-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1a1208; gap: 8px; }
+  .cp-item:last-child { border-bottom: none; }
+  .cp-name { font-size: 12px; font-weight: 600; flex: 1; line-height: 1.3; color: var(--text); }
+  .cp-price-tag { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .cp-input-wrap { display: flex; align-items: center; gap: 4px; }
+  .cp-input { width: 64px; background: #0a0704; border: 1px solid var(--border); border-radius: 8px; color: var(--gold); font-size: 14px; font-weight: 700; padding: 6px 8px; text-align: center; }
+  .cp-input:focus { outline: none; border-color: var(--orange); }
+  .cp-input:disabled { opacity: 0.5; background: #080503; cursor: not-allowed; }
+  .cp-locked-val { font-size: 14px; font-weight: 700; color: var(--muted); min-width: 64px; text-align: right; }
+  .cp-save-btn { margin-top: 12px; background: var(--confirm); color: #fff; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 800; cursor: pointer; width: 100%; }
+  .cp-save-btn:active { opacity: .8; }
+  .cp-category-label { font-size: 10px; color: var(--orange); text-transform: uppercase; letter-spacing: .8px; font-weight: 700; padding: 10px 0 4px; }
+  .profit-pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .profit-pill.pos { background: #0d2f1a; color: var(--green); }
+  .profit-pill.neg { background: #2f0d0d; color: var(--red); }
+  .profit-pill.zero { background: #1a1a0d; color: var(--muted); }
+
+  /* ADMIN SUB-TABS */
+  .admin-subtabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .admin-subtab { flex: 1; padding: 9px 6px; border-radius: 10px; background: #1a1208; border: 1px solid var(--border); color: var(--muted); font-size: 11px; font-weight: 700; cursor: pointer; text-align: center; letter-spacing: .3px; transition: all .15s; }
+  .admin-subtab.active { background: #1a0d00; border-color: var(--orange); color: var(--gold); }
+  .admin-subpage { display: none; }
+  .admin-subpage.active { display: block; }
+
+  /* INVENTORY */
+  .inv-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .inv-lock-btn { display: flex; align-items: center; gap: 6px; background: #1a1208; border: 1px solid var(--border); color: var(--muted); padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .inv-lock-btn.unlocked { border-color: var(--purple); color: #a78bfa; background: #0d0a1a; }
+  .inv-item { display: grid; grid-template-columns: 1fr auto auto; align-items: center; padding: 9px 0; border-bottom: 1px solid #1a1208; gap: 8px; }
+  .inv-item:last-child { border-bottom: none; }
+  .inv-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .inv-total-tag { font-size: 10px; color: var(--muted); }
+  .inv-inputs { display: flex; gap: 6px; align-items: center; }
+  .inv-input-group { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .inv-input-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .inv-input { width: 58px; background: #0a0704; border: 1px solid var(--border); border-radius: 8px; color: var(--gold); font-size: 13px; font-weight: 700; padding: 5px 6px; text-align: center; }
+  .inv-input:focus { outline: none; border-color: var(--purple); }
+  .inv-input:disabled { opacity: 0.45; background: #080503; cursor: not-allowed; }
+  .inv-item-total { font-size: 13px; font-weight: 800; color: #a78bfa; min-width: 52px; text-align: right; }
+  .inv-item-total.zero { color: var(--muted); }
+  .inv-grand-total { margin-top: 12px; background: #0d0a1a; border: 1px solid #2a1a3a; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .inv-grand-label { font-size: 12px; color: var(--muted); font-weight: 700; }
+  .inv-grand-val { font-size: 22px; font-weight: 900; color: #a78bfa; }
+  .inv-save-btn { margin-top: 10px; background: var(--purple); color: #fff; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 800; cursor: pointer; width: 100%; }
+  .inv-save-btn:active { opacity: .8; }
+  .inv-locked-vals { display: flex; gap: 8px; align-items: center; }
+  .inv-locked-qty { font-size: 13px; font-weight: 800; color: var(--orange); min-width: 28px; text-align: right; }
+  .inv-locked-cost { font-size: 12px; color: var(--muted); }
+  .inv-locked-total { font-size: 13px; font-weight: 700; color: #a78bfa; min-width: 48px; text-align: right; }
+
+  /* PDF DOWNLOAD BUTTON */
+  .pdf-download-btn { width: 100%; background: linear-gradient(135deg, #1a0d00, #2a1500); border: 2px solid var(--orange); color: var(--gold); padding: 13px 16px; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: .5px; transition: opacity .15s, transform .1s; margin-bottom: 12px; }
+  .pdf-download-btn:active { opacity: .8; transform: scale(.97); }
+  .pdf-download-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .pdf-download-btn .btn-icon { font-size: 18px; }
+
+  /* misc */
+  .badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+  .badge-hot { background: var(--orange); color: #fff; }
+  .badge-rare { background: var(--gold); color: #000; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+  .page-header { font-size: 22px; font-weight: 900; color: var(--orange); margin-bottom: 4px; letter-spacing: -0.5px; }
+  .page-header-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--confirm); color: #fff; padding: 10px 20px; border-radius: 20px; font-weight: 700; font-size: 14px; z-index: 300; opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+
+  @media (min-width: 420px) {
+    .stat-grid { grid-template-columns: 1fr 1fr 1fr; }
+    .stat-box.wide { grid-column: 1/-1; }
+  }
+
+  /* AUTH SCREEN */
+  .auth-screen {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    align-items: center; justify-content: flex-start; flex-direction: column;
+    padding: 0 24px 48px;
+    padding-top: max(48px, env(safe-area-inset-top, 48px));
+    background: #0d0d0d;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .auth-screen.visible { display: flex; }
+
+  /* warm glow spot behind wordmark */
+  .auth-screen::before {
+    content: '';
+    position: fixed;
+    top: 38%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 520px; height: 320px;
+    background: radial-gradient(ellipse, rgba(232,96,10,0.18) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* brand wordmark */
+  .auth-brand {
+    text-align: center;
+    margin-bottom: 2px;
+    margin-top: 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* PLOT TWIST — Anton (web font, renders the same on every device), Impact as a backup */
+  .auth-brand-script {
+    font-family: 'Anton', 'Impact', 'Arial Narrow', sans-serif;
+    font-size: 74px;
+    font-weight: 900;
+    display: block;
+    line-height: 1;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #ffffff 0%, #f5c842 55%, #e8600a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 18px rgba(232,96,10,0.7)) drop-shadow(0 0 40px rgba(232,96,10,0.35)) drop-shadow(0 3px 6px rgba(0,0,0,1));
+  }
+
+  /* thin ornamental rule */
+  .auth-rule {
+    width: 90px; height: 1.5px;
+    background: linear-gradient(90deg, transparent, rgba(232,96,10,0.8), transparent);
+    margin: 10px auto 14px;
+    position: relative; z-index: 1;
+  }
+
+  .auth-tagline {
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(7px, 2vw, 9px);
+    letter-spacing: clamp(1.5px, 0.8vw, 4px);
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 28px;
+    font-weight: 600;
+    position: relative; z-index: 1;
+    white-space: nowrap;
+  }
+  .auth-tagline b { color: rgba(232,96,10,0.9); font-weight: 700; }
+
+  .auth-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; text-align: center; position: relative; z-index: 1; letter-spacing: .3px; }
+  .auth-card { background: rgba(20,14,6,0.97); border: 1px solid rgba(232,96,10,0.2); border-radius: 20px; padding: 24px 20px; width: 100%; max-width: 360px; position: relative; z-index: 1; box-shadow: 0 28px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03); margin-bottom: 40px; }
+  .auth-label { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .auth-input { width: 100%; background: #080503; border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 16px; padding: 13px 16px; margin-bottom: 14px; outline: none; transition: border-color .15s, box-shadow .15s; }
+  .auth-input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232,96,10,0.1); }
+  .auth-btn { width: 100%; background: linear-gradient(135deg, #e8600a, #bf4d07); color: #fff; border: none; border-radius: 12px; padding: 15px; font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 4px; letter-spacing: .6px; box-shadow: 0 6px 22px rgba(232,96,10,0.32); transition: opacity .15s, transform .1s; }
+  .auth-btn:active { opacity: .88; transform: scale(.98); }
+  .auth-error { font-size: 12px; color: var(--red); text-align: center; margin-top: 10px; min-height: 18px; }
+  .auth-username-sel { width: 100%; background: #080503; border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 15px; padding: 13px 16px; margin-bottom: 14px; outline: none; cursor: pointer; transition: border-color .15s; }
+  .auth-username-sel:focus { border-color: var(--orange); }
+
+  /* USER BAR */
+  .user-bar { display: none; align-items: center; justify-content: space-between; background: #0a0a0a; border-bottom: 1px solid var(--border); padding: 9px 14px; font-size: 16px; }
+  .user-bar.visible { display: flex; }
+  .user-bar-name { color: var(--gold); font-weight: 700; font-size: 16px; }
+  .user-bar-role { color: var(--muted); font-size: 12px; }
+  .user-bar-pending { color: var(--red); font-size: 12px; font-weight: 700; }
+  .user-logout-btn { background: #1a0a0a; border: 1px solid #3a1a1a; color: #f87171; padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .edit-profile-btn { background: #0a1a0d; border: 1px solid #1f3a28; color: #6ee7a0; }
+  .edit-profile-btn:hover { background: #0d2211; }
+
+  /* PROFILE MODAL */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.82); z-index: 300; display: none; align-items: center; justify-content: center; padding: 24px; }
+  .modal-backdrop.open, .modal-backdrop[style*="flex"] { display: flex; }
+  .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px 18px 24px; width: 100%; max-width: 360px; box-shadow: 0 28px 64px rgba(0,0,0,.7); }
+  .modal-card h3 { font-size: 16px; font-weight: 800; color: var(--gold); margin-bottom: 16px; }
+  .modal-card input { width: 100%; background: #080503; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; padding: 11px 13px; margin-bottom: 10px; outline: none; }
+  .modal-card input:focus { border-color: var(--orange); }
+  .profile-pw-input:focus { border-color: var(--orange) !important; }
+  .modal-card button { padding: 10px 16px; border-radius: 10px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .modal-card .profile-btn-save   { background: var(--confirm); color: #fff; }
+  .modal-card .profile-btn-cancel { background: #1a1a1a; color: var(--muted); border: 1px solid #333; }
+  .modal-card .profile-btn-forgot { background: #1a1000; color: var(--gold); border: 1px solid var(--border); }
+  .acc-user-card { background: #0a0704; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .acc-user-top { display: flex; align-items: center; justify-content: space-between; }
+  .acc-user-name { font-size: 14px; font-weight: 800; color: var(--text); }
+  .acc-user-role { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .role-admin { background: #1a0d00; color: var(--gold); border: 1px solid var(--border); }
+  .role-stall1 { background: #0a1a0a; color: var(--green); border: 1px solid #1a3a1a; }
+  .role-stall2 { background: #0d0a1a; color: #a78bfa; border: 1px solid #2a1a3a; }
+  .role-stats       { background: #001a1a; color: var(--profit); border: 1px solid #003a3a; }
+  .role-great-admin { background: #1a0800; color: var(--gold); border: 1px solid var(--orange); font-style: italic; }
+  .acc-user-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .acc-btn { padding: 6px 12px; border-radius: 8px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; }
+  .acc-btn-edit { background: #1a1000; color: var(--gold); border: 1px solid var(--border); }
+  .acc-btn-del { background: #1a0a0a; color: var(--red); border: 1px solid #3a1a1a; }
+  .acc-btn-save { background: var(--confirm); color: #fff; }
+  .acc-btn-cancel { background: #1a1a1a; color: var(--muted); border: 1px solid #333; }
+  .acc-edit-form { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .acc-edit-input { width: 100%; background: #080503; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; padding: 9px 12px; margin-bottom: 8px; outline: none; }
+  .acc-edit-input:focus { border-color: var(--orange); }
+  .acc-role-sel { width: 100%; background: #080503; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; padding: 9px 12px; margin-bottom: 8px; outline: none; cursor: pointer; }
+  .acc-add-card { background: #0a0a0a; border: 2px dashed var(--border); border-radius: 10px; padding: 14px; margin-bottom: 8px; }
+  .acc-add-title { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 10px; }
+  .acc-add-btn { width: 100%; background: var(--orange); color: #fff; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 800; cursor: pointer; }
+  .acc-add-btn:active { opacity: .85; }
+  .acc-current-badge { font-size: 10px; color: var(--orange); font-weight: 700; margin-left: 6px; }
+  /* EYE TOGGLE WRAPPER */
+  .pw-wrap { position: relative; margin-bottom: 8px; }
+  .pw-wrap .auth-input, .pw-wrap .acc-edit-input { margin-bottom: 0; padding-right: 42px; width: 100%; }
+  .pw-eye { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; line-height: 1; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; justify-content: center; }
+  .pw-eye:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ========== AUTH SCREEN ========== -->
+<div class="auth-screen visible" id="auth-screen">
+
+  <!-- Brand Wordmark -->
+  <div class="auth-brand">
+    <span class="auth-brand-script">PLOT TWIST</span>
+  </div>
+  <div class="auth-rule"></div>
+  <div class="auth-tagline">Crunchy Bites &nbsp;<b>·</b>&nbsp; Chatpata Vibes &nbsp;<b>·</b>&nbsp; Zero Boring</div>
+
+  <div class="auth-sub" id="auth-sub">Sign in to continue</div>
+  <div class="auth-card" id="auth-card">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<!-- USER BAR -->
+<div class="user-bar" id="user-bar">
+  <div>
+    <span class="user-bar-name" id="user-bar-name"></span>
+    <span class="user-bar-role" id="user-bar-role"></span><span class="user-bar-pending" id="user-bar-pending" style="display:none"></span>
+  </div>
+  <div style="display:flex;gap:8px;">
+ <button
+  class="user-logout-btn edit-profile-btn"
+  onclick="openProfileModal()">
+  Edit Profile
+</button>
+
+  <button
+    class="user-logout-btn"
+    onclick="logout()">
+    Logout
+  </button>
+</div>
+</div>
+
+<nav class="nav" id="main-nav" style="display:none">
+  <button class="nav-btn" onclick="showPage('admin')" id="nav-admin">
+  <span class="nav-icon">📊</span><span id="nav-admin-text">Admin</span>
+</button>
+  <button class="nav-btn" onclick="showPage('stall1')" id="nav-stall1">
+    <span class="nav-icon">🥗</span>Food Stall
+  </button>
+  <button class="nav-btn" onclick="showPage('stall2')" id="nav-stall2">
+    <span class="nav-icon">🎲</span>Quest Stall
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+<div id="profile-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
+
+    <h3>Edit Profile</h3>
+
+    <input
+      id="profile-new-username"
+      type="text"
+      placeholder="New Username">
+
+    <div class="pw-wrap" style="margin-bottom:10px;">
+      <input class="profile-pw-input" id="profile-current-password" type="password" placeholder="Current Password" style="width:100%;background:#080503;border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:11px 42px 11px 13px;outline:none;margin-bottom:0;">
+      <button type="button" class="pw-eye" onclick="togglePw('profile-current-password',this)" style="top:50%;transform:translateY(-50%);" id="profile-cur-eye"></button>
+    </div>
+
+    <div class="pw-wrap" style="margin-bottom:10px;">
+      <input class="profile-pw-input" id="profile-new-password" type="password" placeholder="New Password (optional)" style="width:100%;background:#080503;border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:11px 42px 11px 13px;outline:none;margin-bottom:0;">
+      <button type="button" class="pw-eye" onclick="togglePw('profile-new-password',this)" style="top:50%;transform:translateY(-50%);" id="profile-new-eye"></button>
+    </div>
+
+    <div id="profile-pin-wrap" style="display:none;margin-bottom:10px;">
+      <div style="font-size:10px;color:var(--orange);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Secret PIN required to change password</div>
+      <div class="pw-wrap" style="margin-bottom:0;">
+        <input class="profile-pw-input" id="profile-pin" type="password" placeholder="Enter your secret PIN" autocomplete="off" style="width:100%;background:#080503;border:1px solid var(--orange);border-radius:10px;color:var(--text);font-size:14px;padding:11px 42px 11px 13px;outline:none;margin-bottom:0;">
+        <button type="button" class="pw-eye" onclick="togglePw('profile-pin',this)" style="top:50%;transform:translateY(-50%);" id="profile-pin-eye"></button>
+      </div>
+    </div>
+
+    <div id="profile-modal-error" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:8px;"></div>
+
+    <div style="display:flex;gap:10px;margin-top:4px;">
+
+      <button class="profile-btn-save" onclick="saveProfileChanges()">
+        Save
+      </button>
+
+      <button class="profile-btn-cancel" onclick="closeProfileModal()">
+        Cancel
+      </button>
+
+      <button class="profile-btn-forgot" onclick="openProfileForgot()">
+        Forgot?
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== ADMIN PAGE ========== -->
+<div class="page active" id="page-admin">
+  <div class="page-header" id="admin-page-header">📊 Admin</div>
+  
+  <div class="page-header-sub" id="admin-page-sub"><span class="live-dot"></span><span id="rt-status-text">Connecting…</span></div>
+
+  <!-- ADMIN SUB-TABS -->
+  <div class="admin-subtabs">
+    <div class="admin-subtab active" onclick="setAdminSubTab('stats', this)">📈 Stats</div>
+    <div class="admin-subtab" onclick="setAdminSubTab('costs', this)">💰 Cost Prices</div>
+    <div class="admin-subtab" onclick="setAdminSubTab('inventory', this)">📦 Inventory</div>
+    <div class="admin-subtab" onclick="setAdminSubTab('accounts', this)" id="subtab-accounts">👤 Accounts<span id="accounts-notif-dot" style="display:none;margin-left:5px;width:7px;height:7px;background:var(--red);border-radius:50%;vertical-align:middle;"></span></div>
+  </div>
+
+  <!-- STATS SUB-PAGE -->
+  <div class="admin-subpage active" id="admin-sub-stats">
+    <div class="stall-tabs">
+      <div class="stall-tab active" onclick="setAdminTab('all', this)">All Combined</div>
+      <div class="stall-tab" onclick="setAdminTab('stall1', this)">🥗 Food Stall</div>
+      <div class="stall-tab" onclick="setAdminTab('stall2', this)">🎲 Quest Stall</div>
+    </div>
+    <div id="admin-content"></div>
+
+    <!-- PDF DOWNLOAD -->
+    <button class="pdf-download-btn" id="pdf-btn" onclick="downloadBusinessPDF()">
+      <span class="btn-icon">📄</span> Download Business Report (PDF)
+    </button>
+
+    <!-- RESET SECTION -->
+    <div class="card">
+      <div class="section-title"><span class="dot" style="background:var(--red)"></span>Reset Options</div>
+      <div class="reset-section">
+        <div>
+          <button class="reset-btn-sales" onclick="initResetConfirm('sales')">
+            📉 Reset Sales Data Only
+            <span class="reset-desc">Clears all counts, coupons &amp; drink records. Keeps cost prices &amp; inventory.</span>
+          </button>
+          <div id="reset-confirm-sales" style="display:none">
+            <div style="font-size:12px;color:var(--red);padding:6px 0;">&#9888; This will clear all sales data. Are you sure?</div>
+            <div class="reset-confirm-row">
+              <button class="reset-yes" onclick="doReset('sales')">Yes, Reset Sales</button>
+              <button class="reset-no" onclick="cancelReset('sales')">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <button class="reset-btn-sales" style="border-color:#7a3a00;color:#fb923c;background:#1a1000;" onclick="initResetConfirm('data')">
+            🗂 Reset All Data (Keep Accounts)
+            <span class="reset-desc">Clears sales, cost prices &amp; inventory. Stats reset too. Accounts are kept.</span>
+          </button>
+          <div id="reset-confirm-data" style="display:none">
+            <div style="font-size:12px;color:var(--red);padding:6px 0;">&#9888; Wipes sales, cost prices &amp; inventory. Accounts remain. Cannot be undone!</div>
+            <div class="reset-confirm-row">
+              <button class="reset-yes" onclick="doReset('data')">Yes, Reset All Data</button>
+              <button class="reset-no" onclick="cancelReset('data')">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <button class="reset-btn-full" onclick="initResetConfirm('full')">
+            🗑 Full Reset (Wipe Everything)
+            <span class="reset-desc">Clears all data including accounts. Returns to fresh setup screen.</span>
+          </button>
+          <div id="reset-confirm-full" style="display:none">
+            <div style="font-size:12px;color:var(--red);padding:6px 0;">&#9888; This wipes ALL data including accounts. Cannot be undone!</div>
+            <div class="reset-confirm-row">
+              <button class="reset-yes" onclick="doReset('full')">Yes, Wipe Everything</button>
+              <button class="reset-no" onclick="cancelReset('full')">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COST PRICES SUB-PAGE -->
+  <div class="admin-subpage" id="admin-sub-costs">
+  <div class="card" id="cost-price-section">
+    <div class="cp-header">
+      <div class="section-title" style="margin-bottom:0"><span class="dot" style="background:var(--profit)"></span>Cost Price Settings</div>
+      <button class="cp-lock-btn" id="cp-lock-btn" onclick="toggleCostLock()">🔒 Locked</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Set cost price per item to calculate profit. Locked by default to prevent accidental edits.</div>
+    <div id="cp-items-list"></div>
+    <button class="cp-save-btn" id="cp-save-btn" style="display:none" onclick="saveCostPrices()">💾 Save Cost Prices</button>
+  </div>
+  </div><!-- end admin-sub-costs -->
+
+  <!-- INVENTORY SUB-PAGE -->
+  <div class="admin-subpage" id="admin-sub-inventory">
+    <div class="card">
+      <div class="inv-header">
+        <div class="section-title" style="margin-bottom:0"><span class="dot" style="background:#a78bfa"></span>Inventory</div>
+        <button class="inv-lock-btn" id="inv-lock-btn" onclick="toggleInvLock()">🔒 Locked</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Set quantity on hand and cost per unit. Totals are auto-calculated.</div>
+      <div id="inv-items-list"></div>
+      <div class="inv-grand-total">
+        <div class="inv-grand-label">📦 Total Inventory Value</div>
+        <div class="inv-grand-val" id="inv-grand-val">₹0</div>
+      </div>
+      <button class="inv-save-btn" id="inv-save-btn" style="display:none" onclick="saveInventory()">💾 Save Inventory</button>
+    </div>
+  </div><!-- end admin-sub-inventory -->
+
+  <!-- ACCOUNTS SUB-PAGE -->
+  <div class="admin-subpage" id="admin-sub-accounts">
+    <!-- inner tabs: Users / Requests / Resolved -->
+    <div style="display:flex;gap:6px;margin-bottom:12px;" id="acc-inner-tabs">
+      <div class="stall-tab active" id="acc-tab-users"    onclick="setAccInnerTab('users')">👥 Users</div>
+      <div class="stall-tab"        id="acc-tab-requests" onclick="setAccInnerTab('requests')">📩 Requests<span id="req-notif-dot" style="display:none;margin-left:5px;width:7px;height:7px;background:var(--red);border-radius:50%;vertical-align:middle;"></span></div>
+      <div class="stall-tab"        id="acc-tab-resolved" onclick="setAccInnerTab('resolved')">✅ Resolved</div>
+    </div>
+    <div id="accounts-content"></div>
+  </div>
+
+</div>
+
+<!-- ========== STALL 1: FOOD ========== -->
+<div class="page" id="page-stall1">
+  <div class="page-header">🥗 Food Stall</div>
+  <div class="page-header-sub">Tap item → confirm to record sale</div>
+  <div class="card" style="text-align:center">
+    <div class="section-title" style="justify-content:center">Total Items Sold — Food Stall</div>
+    <div class="revenue-big" id="stall1-total-sold" style="color:var(--orange)">0</div>
+  </div>
+  <div class="card">
+    <div class="section-title"><span class="dot"></span>Crunch Attacks</div>
+    <div class="item-list" id="food-crunch"></div>
+  </div>
+  <div class="card">
+    <div class="section-title"><span class="dot"></span>Chaat Corner</div>
+    <div class="item-list" id="food-chaat"></div>
+  </div>
+  <div class="card">
+    <div class="section-title"><span class="dot"></span>Plot Twist Specials</div>
+    <div class="item-list" id="food-specials"></div>
+  </div>
+  <div class="card">
+    <div class="section-title"><span class="dot"></span>Drinks</div>
+    <div class="item-list" id="food-drinks"></div>
+  </div>
+</div>
+
+<!-- ========== STALL 2: QUEST ========== -->
+<div class="page" id="page-stall2">
+  <div class="page-header">🎲 Quest Stall</div>
+  <div class="page-header-sub">Tap to record games, rewards & coupons issued</div>
+  <div class="card2" style="text-align:center">
+    <div class="section-title" style="justify-content:center">Total Items Sold — Quest Stall</div>
+    <div class="revenue-big" id="stall2-total-sold" style="color:#a78bfa">0</div>
+  </div>
+  <div class="card2">
+    <div class="section-title"><span class="dot" style="background:var(--gold)"></span>Games Played</div>
+    <div class="item-list" id="quest-games"></div>
+  </div>
+  <div class="card2">
+    <div class="section-title"><span class="dot" style="background:var(--purple)"></span>Collectibles Sold</div>
+    <div class="item-list" id="quest-collectibles"></div>
+  </div>
+  <div class="card2">
+    <div class="section-title"><span class="dot" style="background:var(--orange)"></span>Rewards Won</div>
+    <div class="item-list" id="quest-rewards"></div>
+  </div>
+  <div class="card2">
+    <div class="section-title"><span class="dot" style="background:var(--green)"></span>Coupons Issued</div>
+    <div class="item-list" id="quest-coupons"></div>
+  </div>
+</div>
+
+<!-- ========== MODAL ========== -->
+<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Item Name</div>
+    <div class="modal-sub" id="modal-sub">Tap confirm to add +1</div>
+    <div class="modal-count-row">
+      <div>
+        <div class="modal-count-label">Current count</div>
+        <div class="modal-count-val" id="modal-count">0</div>
+      </div>
+      <div style="text-align:right">
+        <div class="modal-count-label">Adding</div>
+        <div style="font-size:28px;font-weight:800;color:var(--green)">+1</div>
+      </div>
+    </div>
+    <div id="modal-drink-section" style="display:none">
+      <div class="drink-selector-wrap">
+        <div class="drink-selector-label">🥤 Which drink did they take?</div>
+        <div class="drink-selector" id="drink-opts"></div>
+        <div class="drink-required-hint" id="drink-hint">⚠ Please select a drink to confirm</div>
+      </div>
+    </div>
+    <div id="modal-coupon-section" style="display:none">
+      <div class="coupon-toggle" onclick="toggleCoupon()">
+        <input type="checkbox" id="coupon-check" onclick="event.stopPropagation(); updateCouponUI()">
+        <div>
+          <div class="coupon-toggle-label">Coupon Applied?</div>
+          <div class="coupon-toggle-sub">Check if customer used a discount coupon</div>
+        </div>
+      </div>
+      <div id="coupon-picker" style="display:none">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Select coupon used:</div>
+        <div class="coupon-selector" id="coupon-opts"></div>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-cancel" onclick="closeModal()">✕ Cancel</button>
+      <button class="btn btn-confirm" onclick="confirmModal()">✓ Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+// ============================================================
+// DATA DEFINITIONS
+// ============================================================
+const FOOD_ITEMS = {
+  crunch: [
+    { id:'kurkure_blast',  name:'Kurkure Blast',         price:49, sub:'Kurkure • Onion • Tomato • Coriander • Lemon • Masala' },
+    { id:'lays_blast',     name:"Lay's Blast",           price:49, sub:"Lay's • Onion • Tomato • Coriander • Lemon • Masala" },
+    { id:'double_trouble', name:'Double Trouble',        price:69, sub:"Kurkure + Lay's • Onion • Tomato • Coriander • Lemon • Masala" },
+    { id:'firecracker',    name:'Firecracker Blast',     price:59, sub:"Kurkure / Lay's • Double Lemon • Double Masala • Onion • Tomato • Coriander" },
+    { id:'firecracker_p',  name:'Firecracker Blast Premium', price:79, sub:"Kurkure + Lay's • Double Lemon • Double Masala • Onion • Tomato • Coriander", hot:true },
+    { id:'loaded_half',    name:'Loaded Crunch (Half)',  price:59, sub:"Kurkure + Lay's • Extra Veggies • Sev • Lemon • Masala", hot:true },
+    { id:'loaded_full',    name:'Loaded Crunch (Full)',  price:99, sub:"Kurkure + Lay's • Extra Veggies • Sev • Lemon • Masala" },
+  ],
+  chaat: [
+    { id:'papdi_chaat',      name:'Papdi Chaat',         price:49, sub:'Papdi • Onion • Tomato • Coriander • Chutney • Sev • Masala' },
+    { id:'crunchy_papdi',    name:'Crunchy Papdi Chaat', price:59, sub:'Papdi • Kurkure • Onion • Tomato • Coriander • Chutney • Sev • Masala' },
+    { id:'lays_papdi',       name:"Lay's Papdi Chaat",   price:59, sub:"Papdi + Lay's • Onion • Tomato • Coriander • Chutney • Sev • Masala" },
+    { id:'triple_mix_chaat', name:'Triple Mix Chaat',    price:69, sub:"Papdi • Kurkure • Lay's • Onion • Tomato • Coriander • Chutney • Sev • Masala", hot:true },
+  ],
+  specials: [
+    { id:'plot_twist_bomb',     name:'Plot Twist Bomb',     price:99,  sub:'Papdi • Kurkure • Onion • Tomato • Coriander • Chutney • Sev • Masala + [Twist] + [Drink]', hot:true },
+    { id:'ultimate_plot_twist', name:'Ultimate Plot Twist', price:119, sub:"Papdi • Kurkure • Lay's • Onion • Tomato • Coriander • Chutney • Sev • Masala + [Twist] + [Drink]", hot:true },
+    { id:'chaos_bowl',          name:'Chaos Bowl 🔥🔥',    price:149, sub:"Papdi • Kurkure • Lay's • Extra Veggies • Extra Sev • Chutney • Masala + [Twist] + [Drink]", hot:true },
+  ],
+  drinks: [
+    { id:'masala_soda',        name:'Masala Soda',        price:49, sub:'Soda • Lemon • Black Salt • Masala' },
+    { id:'mint_masala_soda',   name:'Mint Masala Soda',   price:49, sub:'Soda • Lemon • Mint • Black Salt • Masala' },
+    { id:'extra_tangy_soda',   name:'Extra Tangy Soda',   price:59, sub:'Soda • Double Lemon • Black Salt • Masala' },
+    { id:'tangy_mint_special', name:'Tangy Mint Special', price:59, sub:'Soda • Double Lemon • Mint • Black Salt • Masala' },
+  ],
+};
+
+const QUEST_ITEMS = {
+  games: [
+    { id:'dice_challenge', name:'Dice Challenge', price:20, sub:'Roll The Dice & Win Rewards', type:'game' },
+    { id:'mystery_box',    name:'Mystery Box',    price:20, sub:'Every Box Has A Surprise',    type:'game' },
+  ],
+  collectibles: [
+    { id:'sticker_1', name:'Single Sticker',    price:10, sub:'Anime sticker',        type:'collectible' },
+    { id:'sticker_3', name:'3 Stickers',        price:25, sub:'Anime stickers bundle', type:'collectible' },
+    { id:'sticker_5', name:'5 Stickers',        price:40, sub:'Anime stickers bundle', type:'collectible' },
+    { id:'poster',    name:"Collector's Poster", price:80, sub:'Epic anime poster',    type:'collectible', rare:true },
+  ],
+  rewards: [
+    { id:'reward_candy',        name:'Candy Won',            price:0, sub:'From dice/mystery reward', type:'reward' },
+    { id:'reward_prem_candy',   name:'Premium Candy Won',    price:0, sub:'From dice/mystery reward', type:'reward' },
+    { id:'reward_chocolate',    name:'Chocolate Won',        price:0, sub:'From mystery box reward',  type:'reward' },
+    { id:'reward_golden_twist', name:'Golden Twist Won! 🏆', price:0, sub:'Rare prize!',              type:'reward', rare:true },
+  ],
+  coupons: [
+    { id:'coupon_5off',  name:'₹5 OFF Coupon Issued',  price:0, sub:'Valid on any ₹59 item',              type:'coupon', couponAmt:5  },
+    { id:'coupon_10off', name:'₹10 OFF Coupon Issued', price:0, sub:'Valid on any ₹69 item',              type:'coupon', couponAmt:10 },
+    { id:'coupon_15off', name:'₹15 OFF Coupon Issued', price:0, sub:'Firecracker Blast Premium (₹79)',    type:'coupon', couponAmt:15 },
+    { id:'coupon_20off', name:'₹20 OFF Coupon Issued', price:0, sub:'Plot Twist Specials (₹99+)',         type:'coupon', couponAmt:20 },
+  ],
+};
+
+const COUPONS = [
+  { id:'coupon_5off',  label:'₹5 OFF',  validOn:'Any ₹59 item',                  foodIds:['firecracker','loaded_half','crunchy_papdi','lays_papdi','extra_tangy_soda','tangy_mint_special'] },
+  { id:'coupon_10off', label:'₹10 OFF', validOn:'Any ₹69 item',                  foodIds:['double_trouble','triple_mix_chaat'] },
+  { id:'coupon_15off', label:'₹15 OFF', validOn:'Firecracker Blast Premium (₹79)',foodIds:['firecracker_p'] },
+  { id:'coupon_20off', label:'₹20 OFF', validOn:'Plot Twist Specials (₹99+)',     foodIds:['plot_twist_bomb','ultimate_plot_twist','chaos_bowl','loaded_full'] },
+];
+
+const ALL_ITEMS = {};
+[...Object.values(FOOD_ITEMS), ...Object.values(QUEST_ITEMS)].forEach(arr => arr.forEach(it => { ALL_ITEMS[it.id] = it; }));
+
+const SPECIAL_WITH_DRINK = ['plot_twist_bomb', 'ultimate_plot_twist', 'chaos_bowl'];
+
+const DRINK_OPTIONS = [
+  { id:'masala_soda',      label:'Masala Soda' },
+  { id:'mint_masala_soda', label:'Mint Masala Soda' },
+  { id:'sprite',           label:'Sprite' },
+  { id:'campa',            label:'Campa' },
+];
+
+// Items that have a cost (for cost price tracking) — free/reward/coupon items skipped
+const COST_ITEMS = [
+  { category:'🥗 Crunch Attacks',    items: FOOD_ITEMS.crunch },
+  { category:'🥗 Chaat Corner',      items: FOOD_ITEMS.chaat },
+  { category:'🥗 Plot Twist Specials',items: FOOD_ITEMS.specials },
+  { category:'🥗 Drinks',            items: FOOD_ITEMS.drinks },
+  { category:'🎲 Games',             items: QUEST_ITEMS.games },
+  { category:'🎲 Collectibles',      items: QUEST_ITEMS.collectibles },
+];
+
+// ============================================================
+// SAFE STORAGE — works in sandboxed iframes too
+// ============================================================
+const _mem = {};
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return _mem[k] ?? null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { _mem[k] = v; } },
+  remove(k) { try { localStorage.removeItem(k); } catch { delete _mem[k]; } },
+};
+
+// ============================================================
+// CLOUD SYNC — Supabase (shared real-time database for the whole team)
+// localStorage above still works as a fast local mirror; these helpers
+// keep it in sync with the cloud so every device sees the same data.
+// ============================================================
+const SUPABASE_URL = 'https://zmagvfjiwprayeabmaro.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_en3VItoxr3GfAoEjqoAK6w_pswHOL3w';
+const supabase = (window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+function cloudPush(key) {
+  if (!supabase) return;
+  const raw = store.get(key);
+  let value = null;
+  try { value = raw ? JSON.parse(raw) : null; } catch { value = null; }
+  supabase.from('pos_state').upsert({ key, value, updated_at: new Date().toISOString() })
+    .then(({ error }) => { if (error) console.error('Cloud save failed:', key, error); });
+}
+
+function cloudDelete(key) {
+  if (!supabase) return;
+  supabase.from('pos_state').delete().eq('key', key)
+    .then(({ error }) => { if (error) console.error('Cloud delete failed:', key, error); });
+}
+
+async function cloudPullAll() {
+  if (!supabase) return;
+  try {
+    const { data, error } = await supabase.from('pos_state').select('*');
+    if (error) { console.error('Cloud load failed:', error); return; }
+
+    // Supabase responded successfully — from here on, it is the single
+    // source of truth. Any local pt_ key it doesn't know about (e.g. data
+    // that was created/edited before the table existed, or on a device
+    // that lost connection mid-sync) gets cleared instead of being left
+    // to silently disagree with what every other device sees.
+    const cloudKeys = new Set((data || []).map(row => row.key));
+    try {
+      const staleKeys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('pt_') && k !== 'pt_session' && !cloudKeys.has(k)) staleKeys.push(k);
+      }
+      staleKeys.forEach(k => localStorage.removeItem(k));
+    } catch (e) {}
+
+    (data || []).forEach(row => {
+      if (row.value !== null && row.value !== undefined) {
+        // Normalize roles in pt_users on the way in
+        let val = row.value;
+        if (row.key === 'pt_users' && Array.isArray(val)) {
+          val = val.map(u => ({ ...u, role: (u.role === 'stats_viewer' ? 'stats' : (u.role || 'stall1')) }));
+        }
+        store.set(row.key, JSON.stringify(val));
+      } else {
+        store.remove(row.key);
+      }
+    });
+  } catch (e) { console.error('Cloud load failed:', e); /* offline/unreachable — keep local data as a fallback */ }
+}
+
+// ⚠️  REALTIME CHECKLIST — if changes on one device don't appear on others:
+//    1. Supabase Dashboard → Project Settings → API → copy the "anon public" key
+//       It starts with eyJ… (a JWT). Paste it as SUPABASE_KEY above.
+//       The sb_publishable_… format does NOT work with realtime subscriptions.
+//    2. Supabase Dashboard → Database → Replication → find the pos_state table
+//       and make sure the Realtime toggle is ON.
+//    3. Supabase Dashboard → Authentication → Policies — make sure pos_state
+//       has RLS policies that allow anon SELECT/INSERT/UPDATE/DELETE.
+
+// Real-time connection status dot + text in the admin header
+function setRtStatus(status) {
+  const dot  = document.querySelector('#admin-page-sub .live-dot');
+  const text = document.getElementById('rt-status-text');
+  if (!dot || !text) return;
+  if (status === 'connected') {
+    dot.style.background = '';   // green (CSS default)
+    dot.style.animation  = '';
+    text.textContent = 'Live';
+  } else if (status === 'connecting') {
+    dot.style.background = 'var(--gold)';
+    dot.style.animation  = 'pulse 0.6s infinite';
+    text.textContent = 'Syncing…';
+  } else {
+    dot.style.background = 'var(--red)';
+    dot.style.animation  = 'none';
+    text.textContent = 'Offline';
+  }
+}
+
+let _realtimeChannel = null;
+let _realtimeReconnectTimer = null;
+
+function cloudSubscribe() {
+  if (!supabase) return;
+
+  // Remove any existing channel before creating a new one — prevents duplicates
+  if (_realtimeChannel) {
+    supabase.removeChannel(_realtimeChannel);
+    _realtimeChannel = null;
+  }
+  if (_realtimeReconnectTimer) {
+    clearTimeout(_realtimeReconnectTimer);
+    _realtimeReconnectTimer = null;
+  }
+
+  setRtStatus('connecting');
+
+  _realtimeChannel = supabase.channel('pos_state_live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'pos_state' }, payload => {
+      const row = payload.eventType === 'DELETE' ? payload.old : payload.new;
+      if (!row || !row.key) return;
+
+      // Update local store from the realtime payload
+      if (payload.eventType === 'DELETE') {
+        store.remove(row.key);
+      } else {
+        let val = row.value;
+        // Normalize roles on the way in
+        if (row.key === 'pt_users' && Array.isArray(val))
+          val = val.map(u => ({ ...u, role: (u.role === 'stats_viewer' ? 'stats' : (u.role || 'stall1')) }));
+        store.set(row.key, JSON.stringify(val));
+      }
+
+      onCloudUpdate(row.key);
+    })
+    .subscribe((status, err) => {
+      if (status === 'SUBSCRIBED') {
+        setRtStatus('connected');
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        setRtStatus('disconnected');
+        // Pull fresh data then re-render, then schedule reconnect
+        cloudPullAll().then(() => {
+          if (currentUser) renderAll();
+        });
+        _realtimeReconnectTimer = setTimeout(() => cloudSubscribe(), 5000);
+      }
+      if (err) console.error('Realtime error:', err);
+    });
+}
+
+// #10 — Shared force-logout check. Called from both the realtime handler and
+// the polling fallback so either path can trigger an immediate logout.
+async function checkForceLogout() {
+  if (!currentUser || !supabase) return;
+  try {
+    // Always go straight to the cloud — don't trust the local store,
+    // which may not have been updated yet if realtime is lagging.
+    const { data, error } = await supabase
+      .from('pos_state')
+      .select('value')
+      .eq('key', 'pt_force_logout')
+      .maybeSingle();
+    if (error) {
+  console.error('Force logout check failed:', error);
+  return;
+}
+    const logoutMap = (data && data.value) ? data.value : {};
+    if (logoutMap[currentUser.id]) {
+      // Consume the signal: remove just this user's entry and push back
+      delete logoutMap[currentUser.id];
+      await supabase.from('pos_state').upsert({
+        key: 'pt_force_logout',
+        value: logoutMap,
+        updated_at: new Date().toISOString(),
+      });
+      store.set('pt_force_logout', JSON.stringify(logoutMap));
+      showToast('Your password was changed by admin — please log in again');
+      setTimeout(() => logout(), 1800);
+    }
+  } catch(e) {}
+}
+
+function onCloudUpdate(key) {
+  // Auth screen is open — re-run authInit so it fetches users live and
+  // shows the correct screen (setup vs login). Covers the case where the
+  // Great Admin created the first user on another device.
+  if (key === 'pt_users' && document.getElementById('auth-screen').classList.contains('visible')) {
+    authInit();
+    return;
+  }
+
+  if (key === 'pt_requests' && currentUser && currentUser.role === 'admin') {
+    updateRequestNotifs();
+    if (adminSubTab === 'accounts') renderAccounts();
+  }
+
+  // Force-logout signal from another device (e.g. admin changed this user's password)
+  if (key === 'pt_force_logout') {
+    checkForceLogout();
+    return;
+  }
+
+  if (currentUser) renderAll();
+}
+
+function getSalesState() {
+  try { return JSON.parse(store.get('pt_sales') || 'null') || freshSalesState(); }
+  catch { return freshSalesState(); }
+}
+function freshSalesState() {
+  const s = { counts: {}, coupon_counts: {}, drink_counts: {}, stall: {} };
+  [...Object.values(FOOD_ITEMS)].forEach(arr => arr.forEach(it => {
+    s.counts[it.id] = 0;
+    s.coupon_counts[it.id] = { '5':0, '10':0, '15':0, '20':0, none:0 };
+    s.stall[it.id] = 'stall1';
+  }));
+  [...Object.values(QUEST_ITEMS)].forEach(arr => arr.forEach(it => {
+    s.counts[it.id] = 0;
+    s.stall[it.id] = 'stall2';
+  }));
+  return s;
+}
+function saveSalesState(s) { store.set('pt_sales', JSON.stringify(s)); cloudPush('pt_sales'); }
+
+function getCostState() {
+  try { return JSON.parse(store.get('pt_costs') || 'null') || {}; }
+  catch { return {}; }
+}
+function saveCostState(c) { store.set('pt_costs', JSON.stringify(c)); cloudPush('pt_costs'); }
+
+function getInvState() {
+  try { return JSON.parse(store.get('pt_inventory') || 'null') || {}; }
+  catch { return {}; }
+}
+function saveInvState(v) { store.set('pt_inventory', JSON.stringify(v)); cloudPush('pt_inventory'); }
+
+// ============================================================
+// AUTH / USER SYSTEM
+// ============================================================
+function getUsers() {
+  try { return JSON.parse(store.get('pt_users') || 'null') || []; }
+  catch { return []; }
+}
+function saveUsers(u) {
+  // Normalize any legacy role names before saving
+  u = u.map(usr => ({ ...usr, role: normalizeRole(usr.role) }));
+  store.set('pt_users', JSON.stringify(u)); cloudPush('pt_users');
+}
+
+// ============================================================
+// PASSWORD HASHING — passwords are salted + SHA-256 hashed (Web Crypto,
+// built into every modern browser) before they're ever written to
+// localStorage or pushed to Supabase. Anyone reading the database
+// directly sees only a salt + hash, never the real password.
+// Note: since this app has no private backend server, this protects
+// against the database being read directly, but it isn't equivalent
+// to a server-side bcrypt/Argon2 setup with a hidden secret — it's a
+// solid, practical baseline for an internal team tool, not a bank.
+// ============================================================
+const ICON_EYE = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const ICON_EYE_OFF = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  if (!inp) return;
+  const show = inp.type === "password";
+  inp.type = show ? "text" : "password";
+  btn.innerHTML = show ? ICON_EYE_OFF : ICON_EYE;
+}
+
+function randomSalt() {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function hashPassword(password, salt) {
+  const data = new TextEncoder().encode(salt + ':' + password);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Session — keeps the logged-in user across page refreshes until they explicitly log out
+function getSession() {
+  try { return JSON.parse(store.get('pt_session') || 'null'); }
+  catch { return null; }
+}
+function saveSession(user) { store.set('pt_session', JSON.stringify(user)); }
+function clearSession() { store.remove('pt_session'); }
+
+let currentUser = null; // { id, username, role }
+let _authInitRunning = false;
+
+async function authInit() {
+  // Prevent concurrent runs — onCloudUpdate can trigger this while it's already in flight
+  if (_authInitRunning) return;
+  _authInitRunning = true;
+  try {
+    await _authInitCore();
+  } finally {
+    _authInitRunning = false;
+  }
+}
+
+async function _authInitCore() {
+  // Always fetch live from Supabase — never trust local cache for auth decisions.
+  // If offline, show a blocking screen (no fallback).
+  if (!supabase) {
+    _showOfflineBlock();
+    return;
+  }
+
+  let liveUsers = [];
+  try {
+    const { data, error } = await supabase
+      .from('pos_state')
+      .select('value')
+      .eq('key', 'pt_users')
+      .maybeSingle();
+    if (error) throw error;
+    liveUsers = (data && Array.isArray(data.value))
+      ? data.value.map(u => ({ ...u, role: normalizeRole(u.role) }))
+      : [];
+  } catch(e) {
+    // Tell apart two genuinely different failures by what kind of error
+    // actually came back, not by navigator.onLine (unreliable — it only
+    // reflects the network adapter, not whether this specific request
+    // reached Supabase):
+    //  - A TypeError ("Failed to fetch" / "NetworkError...") means the
+    //    request never got a response at all: wrong URL, CORS rejection,
+    //    DNS failure, an extension/firewall blocking the domain, or
+    //    genuinely no internet. That's a connectivity-class problem.
+    //  - Anything else is a real response FROM Supabase containing a
+    //    Postgrest error (missing table, RLS denial, etc) — a setup
+    //    problem, with a totally different fix.
+    if (e instanceof TypeError) {
+      _showOfflineBlock(e);
+    } else {
+      _showDbSetupError(e);
+    }
+    return;
+  }
+
+  // Write live users into local store so the rest of the app can use getUsers()
+  store.set('pt_users', JSON.stringify(liveUsers));
+
+  if (liveUsers.length === 0) { showSetupScreen(); return; }
+
+  // Session check — validate against live users, not local cache
+  const session = getSession();
+  if (session) {
+    const stillValid = liveUsers.find(u => u.id === session.id);
+    if (stillValid) {
+      doLogin({ id: stillValid.id, username: stillValid.username, role: stillValid.role });
+      return;
+    }
+    clearSession(); // account deleted or changed on another device
+  }
+
+  showLoginScreen();
+}
+
+function _showOfflineBlock(e) {
+  const msg = (e && e.message) ? e.message : '';
+  document.getElementById('auth-sub').textContent = 'Cannot connect to server';
+  document.getElementById('auth-card').innerHTML = `
+    <div style="text-align:center;padding:16px 0;">
+      <div style="font-size:32px;margin-bottom:12px;">📡</div>
+      <div style="font-size:14px;color:var(--red);font-weight:700;margin-bottom:8px;">Could not reach the database</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;text-align:left;">
+        The request to Supabase never got a response. This is usually one of:
+      </div>
+      <ul style="font-size:11px;color:var(--muted);margin:0 0 14px;padding-left:18px;text-align:left;line-height:1.6;">
+        <li>No internet connection right now</li>
+        <li><code>SUPABASE_URL</code> in the code is wrong or the project was paused/deleted</li>
+        <li>A browser extension (ad-blocker, privacy tool) is blocking the <code>supabase.co</code> domain</li>
+        <li>A firewall/VPN/network is blocking that domain</li>
+      </ul>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:16px;text-align:left;">Raw error: ${msg}</div>
+      <button class="auth-btn" onclick="authInit()">Retry</button>
+    </div>
+  `;
+  document.getElementById('auth-screen').classList.add('visible');
+}
+
+// Shown instead of _showOfflineBlock() when the browser IS online but the
+// 'pos_state' query still failed — almost always because the table doesn't
+// exist yet or its RLS policies don't allow the anon key to read it. This is
+// what every brand-new Supabase project hits before it's been provisioned,
+// and it has nothing to do with internet connectivity, so it gets its own
+// screen with the actual fix instead of a "check your internet" dead end.
+function _showDbSetupError(e) {
+  const msg = (e && e.message) ? e.message : 'Unknown error';
+  document.getElementById('auth-sub').textContent = 'Database not set up yet';
+  document.getElementById('auth-card').innerHTML = `
+    <div style="text-align:center;padding:16px 0;">
+      <div style="font-size:32px;margin-bottom:12px;">🛠️</div>
+      <div style="font-size:14px;color:var(--red);font-weight:700;margin-bottom:8px;">Can't read the database</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;text-align:left;">
+        This is online, so it's not a connectivity issue — the <code>pos_state</code>
+        table either doesn't exist yet or its Row Level Security policies don't
+        allow the app's key to read/write it. Run this once in the Supabase
+        SQL editor for this project, then retry:
+      </div>
+      <pre style="text-align:left;font-size:10px;line-height:1.5;background:#0a0704;border:1px solid var(--border);border-radius:8px;padding:10px;overflow-x:auto;color:var(--text);margin-bottom:14px;">create table if not exists pos_state (
+  key text primary key,
+  value jsonb,
+  updated_at timestamptz default now()
+);
+alter table pos_state enable row level security;
+create policy "anon full access"
+  on pos_state for all
+  to anon
+  using (true) with check (true);</pre>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:16px;text-align:left;">Raw error: ${msg}</div>
+      <button class="auth-btn" onclick="authInit()">Retry</button>
+    </div>
+  `;
+  document.getElementById('auth-screen').classList.add('visible');
+}
+
+function showSetupScreen() {
+  document.getElementById('auth-sub').textContent = 'No users found. Create your admin account.';
+  document.getElementById('auth-card').innerHTML = `
+    <div class="auth-label">Username</div>
+    <input class="auth-input" id="setup-user" type="text" placeholder="Enter admin username" autocomplete="off" />
+    <div class="auth-label">Password</div>
+    <div class="pw-wrap"><input class="auth-input" id="setup-pass" type="password" placeholder="Enter password" /><button type="button" class="pw-eye" onclick="togglePw('setup-pass',this)">${ICON_EYE}</button></div>
+    <div class="auth-label">Confirm Password</div>
+    <div class="pw-wrap"><input class="auth-input" id="setup-pass2" type="password" placeholder="Confirm password" /><button type="button" class="pw-eye" onclick="togglePw('setup-pass2',this)">${ICON_EYE}</button></div>
+    <div class="auth-label" style="color:var(--gold)">🔐 App Secret Key <span style="color:var(--muted);font-size:9px;text-transform:none;letter-spacing:0">(shared with all staff — required at every login)</span></div>
+    <div class="pw-wrap"><input class="auth-input" id="setup-secret" type="password" placeholder="Set the app secret key" autocomplete="off" /><button type="button" class="pw-eye" onclick="togglePw('setup-secret',this)">${ICON_EYE}</button></div>
+    <div class="auth-label" style="color:var(--orange)">&#x1F511; Secret PIN <span style="color:var(--muted);font-size:9px;text-transform:none;letter-spacing:0">(for deleting your own account — never shown again)</span></div>
+    <div class="pw-wrap"><input class="auth-input" id="setup-pin" type="password" placeholder="Set a secret PIN" autocomplete="off" /><button type="button" class="pw-eye" onclick="togglePw('setup-pin',this)">${ICON_EYE}</button></div>
+    <button class="auth-btn" onclick="doSetup()">Create Admin Account</button>
+    <div class="auth-error" id="auth-error"></div>
+  `;
+  document.getElementById('auth-screen').classList.add('visible');
+  document.getElementById('auth-card').addEventListener('keydown', e => { if (e.key === 'Enter') doSetup(); });
+  document.getElementById('setup-user').focus();
+}
+
+async function doSetup() {
+  const u      = document.getElementById('setup-user').value.trim();
+  const p      = document.getElementById('setup-pass').value;
+  const p2     = document.getElementById('setup-pass2').value;
+  const secret = document.getElementById('setup-secret').value;
+  const pin    = document.getElementById('setup-pin').value;
+  const err    = document.getElementById('auth-error');
+
+  if (!u)              { err.textContent = 'Username is required.'; return; }
+  if (p.length < 3)   { err.textContent = 'Password must be at least 3 characters.'; return; }
+  if (p !== p2)        { err.textContent = 'Passwords do not match.'; return; }
+  if (secret.length < 4) { err.textContent = 'App secret key must be at least 4 characters.'; return; }
+  if (!pin)            { err.textContent = 'Secret PIN is required.'; return; }
+
+  if (!supabase) { err.textContent = 'No database connection. Check your internet and try again.'; return; }
+
+  err.textContent = '\u23F3 Saving\u2026';
+
+  try {
+    const { error: vaultErr } = await supabase.rpc('set_app_secret', { secret_value: secret });
+    if (vaultErr) throw new Error('Vault error: ' + vaultErr.message);
+  } catch (e) {
+    err.textContent = 'Could not save secret key: ' + e.message;
+    return;
+  }
+
+  const salt     = randomSalt();
+  const passHash = await hashPassword(p, salt);
+  const pinSalt  = randomSalt();
+  const pinHash  = await hashPassword(pin, pinSalt);
+  const users    = [{ id: Date.now().toString(), username: u, salt, passHash, role: 'admin', isGreatAdmin: true, pinSalt, pinHash }];
+  saveUsers(users);
+  err.textContent = '';
+  doLogin({ id: users[0].id, username: u, role: 'admin' });
+}
+
+// ---- LOGIN SCREEN ----
+function showLoginScreen() {
+  const users = getUsers();
+  document.getElementById('auth-sub').textContent = 'Sign in to continue';
+  document.getElementById('auth-card').innerHTML = `
+    <div class="auth-label">Select User</div>
+    <select class="auth-username-sel" id="login-user">
+      <option value="">-- Choose user --</option>
+      ${users.map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
+    </select>
+    <div class="auth-label">Password</div>
+    <div class="pw-wrap"><input class="auth-input" id="login-pass" type="password" placeholder="Enter password" /><button type="button" class="pw-eye" onclick="togglePw('login-pass',this)">${ICON_EYE}</button></div>
+    <div class="auth-label" style="color:var(--gold)">🔐 App Secret Key</div>
+    <div class="pw-wrap"><input class="auth-input" id="login-secret" type="password" placeholder="Enter app secret key" autocomplete="off" /><button type="button" class="pw-eye" onclick="togglePw('login-secret',this)">${ICON_EYE}</button></div>
+    <button class="auth-btn" onclick="attemptLogin()">Sign In</button>
+    <button type="button" onclick="openLoginForgot()" style="width:100%;background:none;border:none;color:var(--muted);font-size:12px;font-weight:600;margin-top:14px;cursor:pointer;letter-spacing:.3px;">Forgot credentials? Send a request to admin</button>
+    <div class="auth-error" id="auth-error"></div>
+  `;
+  document.getElementById('auth-screen').classList.add('visible');
+  document.getElementById('auth-card').addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+  document.getElementById('login-pass').focus();
+}
+
+function openLoginForgot() {
+  const existing = document.getElementById('login-forgot-modal');
+  if (existing) existing.remove();
+
+  const users = getUsers();
+  const roleLabels = { admin:'👑 Admin', stall1:'🥗 Food Stall', stall2:'🎲 Quest Stall', stats:'📊 Stats Viewer' };
+
+  const modal = document.createElement('div');
+  modal.id = 'login-forgot-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.87);z-index:600;display:flex;align-items:center;justify-content:center;padding:24px;';
+  modal.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 18px 24px;width:100%;max-width:360px;box-shadow:0 28px 64px rgba(0,0,0,.7);">
+      <div style="font-size:16px;font-weight:800;color:var(--gold);margin-bottom:4px;">🔑 Forgot Credentials</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Tell us who you are and the admin will help you log in.</div>
+
+      <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Your Name / Username</div>
+      <select id="lf-user" style="width:100%;background:#080503;border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:11px 13px;outline:none;margin-bottom:4px;cursor:pointer;">
+        <option value="">-- Select your account --</option>
+        ${users.map(u => `<option value="${u.id}" data-role="${u.role}">${u.username}</option>`).join('')}
+      </select>
+      <div id="lf-role-display" style="font-size:11px;color:var(--muted);min-height:16px;margin-bottom:12px;padding-left:2px;"></div>
+
+      <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Your Phone Number</div>
+      <input id="lf-phone" type="tel" autocomplete="off" placeholder="e.g. 9876543210"
+        style="width:100%;background:#080503;border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:11px 13px;outline:none;margin-bottom:14px;">
+
+      <div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">What do you need?</div>
+      <label style="display:flex;align-items:center;gap:10px;background:#0a0704;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;">
+        <input type="checkbox" id="lf-need-pass" style="width:18px;height:18px;accent-color:var(--orange);cursor:pointer;">
+        <span style="font-size:13px;font-weight:600;">Forgot Password</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;background:#0a0704;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;cursor:pointer;">
+        <input type="checkbox" id="lf-need-secret" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer;">
+        <span style="font-size:13px;font-weight:600;">🔐 Forgot App Secret Key</span>
+      </label>
+
+      <div id="lf-error" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:10px;"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button class="btn btn-cancel" onclick="document.getElementById('login-forgot-modal').remove()">Cancel</button>
+        <button class="btn btn-confirm" onclick="submitLoginForgot()">Send Request</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Auto-show role when user is selected
+  const lfUserSel = document.getElementById('lf-user');
+  const lfRoleDisplay = document.getElementById('lf-role-display');
+  lfUserSel.addEventListener('change', function() {
+    const opt = this.options[this.selectedIndex];
+    const role = opt ? opt.dataset.role : '';
+    lfRoleDisplay.textContent = role ? ('Role: ' + (roleLabels[role] || role)) : '';
+  });
+
+  document.getElementById('lf-phone').focus();
+}
+
+function submitLoginForgot() {
+  const errEl      = document.getElementById('lf-error');
+  errEl.textContent = '';
+  const userId     = document.getElementById('lf-user').value;
+  const phone      = document.getElementById('lf-phone').value.trim();
+  const needPass   = document.getElementById('lf-need-pass') ? document.getElementById('lf-need-pass').checked : false;
+  const needSecret = document.getElementById('lf-need-secret') ? document.getElementById('lf-need-secret').checked : false;
+
+  if (!userId) { errEl.textContent = 'Please select your account.'; return; }
+  if (!phone)  { errEl.textContent = 'Phone number is required.'; return; }
+
+  const users    = getUsers();
+  const user     = users.find(u => u.id === userId);
+  const username = user ? user.username : userId;
+  const role     = user ? user.role : 'unknown';
+
+  const changes = ['login_help'];
+  if (needPass)   changes.push('forgot_password');
+  if (needSecret) changes.push('forgot_secret_key');
+
+  saveRequest({
+    type: 'login_help',
+    source: 'login',
+    userId,
+    username,
+    role,
+    phone,
+    changes,
+    needSecretKey: needSecret,
+    newUsername: null,
+    newPassword: null,
+  });
+
+  document.getElementById('login-forgot-modal').remove();
+  showToast('Request sent — contact your admin ✓');
+}
+
+async function attemptLogin() {
+  const uid    = document.getElementById('login-user').value;
+  const pass   = document.getElementById('login-pass').value;
+  const secret = (document.getElementById('login-secret') || {}).value || '';
+  const err    = document.getElementById('auth-error');
+
+  if (!uid)    { err.textContent = 'Please select a user.'; return; }
+  if (!pass)   { err.textContent = 'Password is required.'; return; }
+  if (!secret) { err.textContent = 'App secret key is required.'; return; }
+
+  // Must be online — no local fallback for auth
+  if (!supabase) { err.textContent = 'No connection to server. Check your internet.'; return; }
+
+  err.textContent = '\u23F3 Verifying\u2026';
+
+  // 1. Verify secret key against Vault (server-side, returns boolean)
+  let secretOk = false;
+  try {
+    const { data, error } = await supabase.rpc('verify_app_secret', { secret_input: secret });
+    if (error) throw error;
+    secretOk = !!data;
+  } catch (e) {
+    err.textContent = 'Server error checking secret key. Try again.';
+    return;
+  }
+  if (!secretOk) { err.textContent = 'Incorrect app secret key.'; return; }
+
+  // 2. Pull fresh user list directly from Supabase (never trust local cache for auth)
+  let users = [];
+  try {
+    const { data, error } = await supabase
+      .from('pos_state')
+      .select('value')
+      .eq('key', 'pt_users')
+      .maybeSingle();
+    if (error) throw error;
+    users = (data && Array.isArray(data.value)) ? data.value : [];
+    // Normalise roles
+    users = users.map(u => ({ ...u, role: normalizeRole(u.role) }));
+  } catch (e) {
+    err.textContent = 'Could not load users from server. Try again.';
+    return;
+  }
+
+  const user = users.find(u => u.id === uid);
+  if (!user) { err.textContent = 'User not found.'; return; }
+
+  // 3. Verify password
+  let ok = false;
+  if (user.passHash) {
+    ok = (await hashPassword(pass, user.salt)) === user.passHash;
+  } else if (user.password !== undefined) {
+    // Legacy plain-text — upgrade on first successful login
+    ok = user.password === pass;
+    if (ok) {
+      const salt = randomSalt();
+      user.salt     = salt;
+      user.passHash = await hashPassword(pass, salt);
+      delete user.password;
+      // Push upgraded user list back
+      const allUsers = users.map(u2 => u2.id === user.id ? user : u2);
+      store.set('pt_users', JSON.stringify(allUsers));
+      cloudPush('pt_users');
+    }
+  }
+  if (!ok) { err.textContent = 'Incorrect password.'; return; }
+
+  err.textContent = '';
+  doLogin({ id: user.id, username: user.username, role: user.role });
+}
+
+// Normalize legacy role name — 'stats_viewer' was used briefly; canonical is 'stats'
+function normalizeRole(r) { return r === 'stats_viewer' ? 'stats' : (r || 'stall1'); }
+
+function doLogin(user) {
+  user = { ...user, role: normalizeRole(user.role) };
+  currentUser = user;
+  saveSession(user);
+  document.getElementById('auth-screen').classList.remove('visible');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  // Update user bar
+  const bar = document.getElementById('user-bar');
+  bar.classList.add('visible');
+  document.getElementById('user-bar-name').textContent = user.username;
+  const roleLabels = {
+  admin: '👑 Admin',
+  stall1: '🥗 Food Stall',
+  stall2: '🎲 Quest Stall',
+  stats: '📊 Stats Viewer'
+};
+  document.getElementById('user-bar-role').textContent = ' · ' + (roleLabels[user.role] || user.role);
+  // Show nav
+  const nav = document.getElementById('main-nav');
+  nav.style.display = 'flex';
+  applyPermissions();
+  renderAll();
+}
+
+function logout() {
+  currentUser = null;
+  clearSession();
+  accEditingId = null;
+  accInnerTab = 'users';
+  adminSubTab = 'stats';
+  adminTab = 'all';
+  // hide everything
+  document.getElementById('user-bar').classList.remove('visible');
+  document.getElementById('main-nav').style.display = 'none';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // re-show auth
+  authInit();
+}
+
+function applyPermissions() {
+  if (!currentUser) return;
+
+  const role = currentUser.role;
+
+  const navAdmin  = document.getElementById('nav-admin');
+  const navStall1 = document.getElementById('nav-stall1');
+  const navStall2 = document.getElementById('nav-stall2');
+  
+  const navAdminText = document.getElementById('nav-admin-text');
+
+if (navAdminText) {
+  navAdminText.textContent =
+    role === 'stats'
+      ? 'Statistics'
+      : 'Admin';
+}
+
+  // Show/hide nav tabs based on role
+  navAdmin.style.display =
+    (role === 'admin' || role === 'stats') ? '' : 'none';
+
+  navStall1.style.display =
+    (role === 'admin' || role === 'stall1') ? '' : 'none';
+
+  navStall2.style.display =
+    (role === 'admin' || role === 'stall2') ? '' : 'none';
+
+  // Navigate to appropriate page
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  if (role === 'admin' || role === 'stats') {
+    document.getElementById('page-admin').classList.add('active');
+    navAdmin.classList.add('active');
+  }
+  else if (role === 'stall1') {
+    document.getElementById('page-stall1').classList.add('active');
+    navStall1.classList.add('active');
+  }
+  else if (role === 'stall2') {
+    document.getElementById('page-stall2').classList.add('active');
+    navStall2.classList.add('active');
+  }
+
+  // Stats Viewer restrictions
+  if (role === 'stats') {
+
+    document.querySelectorAll('.admin-subtab').forEach((btn, index) => {
+      btn.style.display = index === 0 ? '' : 'none';
+    });
+
+    // Force the stats subpage visible — no other subpage will be active for this role
+    document.querySelectorAll('.admin-subpage').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.admin-subtab').forEach(b => b.classList.remove('active'));
+    const statsPage = document.getElementById('admin-sub-stats');
+    if (statsPage) statsPage.classList.add('active');
+    const statsTab = document.querySelector('.admin-subtab');
+    if (statsTab) statsTab.classList.add('active');
+    adminSubTab = 'stats';
+
+    const resetSection = document.querySelector('.reset-section');
+    if (resetSection) {
+      const card = resetSection.closest('.card');
+      if (card) card.style.display = 'none';
+    }
+
+  } else {
+
+    document.querySelectorAll('.admin-subtab').forEach(btn => {
+      btn.style.display = '';
+    });
+
+    const resetSection = document.querySelector('.reset-section');
+    if (resetSection) {
+      const card = resetSection.closest('.card');
+      if (card) card.style.display = '';
+    }
+  }
+}
+
+// Guard showPage so non-admins can't navigate to restricted pages
+function showPage(id) {
+  if (!currentUser) return;
+  if (id === 'admin' && currentUser.role !== 'admin' && currentUser.role !== 'stats') return;
+  if (id === 'stall1' && currentUser.role !== 'admin' && currentUser.role !== 'stall1') return;
+  if (id === 'stall2' && currentUser.role !== 'admin' && currentUser.role !== 'stall2') return;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  renderAll();
+}
+
+// ============================================================
+// ACCOUNTS MANAGEMENT (Admin only)
+// ============================================================
+let accEditingId = null;
+let accInnerTab  = 'users'; // 'users' | 'requests' | 'resolved'
+
+function setAccInnerTab(tab) {
+  accEditingId = null; // clear any in-progress edit when switching tabs
+  accInnerTab = tab;
+  ['users','requests','resolved'].forEach(t => {
+    document.getElementById('acc-tab-' + t).classList.toggle('active', t === tab);
+  });
+  renderAccounts();
+}
+
+// Update all pending-request notification indicators (user bar + subtab dot + inner tab dot)
+function updateRequestNotifs() {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  const pending = getRequests().filter(r => r.status === 'pending').length;
+
+  // User bar
+  const pendingEl = document.getElementById('user-bar-pending');
+  if (pendingEl) {
+    if (pending > 0) {
+      pendingEl.style.display = '';
+      pendingEl.textContent = ' · 🔴 ' + pending + ' pending request' + (pending > 1 ? 's' : '');
+    } else {
+      pendingEl.style.display = 'none';
+    }
+  }
+
+  // Accounts subtab dot
+  const subtabDot = document.getElementById('accounts-notif-dot');
+  if (subtabDot) subtabDot.style.display = pending > 0 ? 'inline-block' : 'none';
+
+  // Inner Requests tab dot
+  const reqDot = document.getElementById('req-notif-dot');
+  if (reqDot) reqDot.style.display = pending > 0 ? 'inline-block' : 'none';
+}
+
+function renderAccounts() {
+  updateRequestNotifs();
+  if (accInnerTab === 'requests') { renderRequests(); return; }
+  if (accInnerTab === 'resolved') { renderResolved(); return; }
+  // --- USERS tab ---
+  const cont = document.getElementById('accounts-content');
+  if (!cont) return;
+  const users = getUsers();
+  const roleLabels = {
+  admin: 'Admin',
+  stall1: 'Food Stall',
+  stall2: 'Quest Stall',
+  stats: 'Stats Viewer'
+};
+  const roleClasses = {
+  admin: 'role-admin',
+  stall1: 'role-stall1',
+  stall2: 'role-stall2',
+  stats: 'role-stats'
+};
+
+  let html = `<div class="card">
+    <div class="section-title"><span class="dot" style="background:var(--green)"></span>Add New User</div>
+    <div class="acc-add-card">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Username</div>
+      <input class="acc-edit-input" id="acc-new-user" placeholder="New username" autocomplete="off" />
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Password</div>
+      <div class="pw-wrap"><input class="acc-edit-input" id="acc-new-pass" type="password" placeholder="Password" /><button type="button" class="pw-eye" onclick="togglePw('acc-new-pass',this)">${ICON_EYE}</button></div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Confirm Password</div>
+      <div class="pw-wrap"><input class="acc-edit-input" id="acc-new-pass2" type="password" placeholder="Confirm password" /><button type="button" class="pw-eye" onclick="togglePw('acc-new-pass2',this)">${ICON_EYE}</button></div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Role</div>
+      <select class="acc-role-sel" id="acc-new-role">
+        <option value="admin">👑 Admin — Full access</option>
+        <option value="stall1" selected>🥗 Food Stall Only</option>
+        <option value="stall2">🎲 Quest Stall Only</option>
+		<option value="stats">📊 Stats Viewer</option>
+      </select>
+      <div class="auth-error" id="acc-add-error" style="margin-bottom:8px"></div>
+      <button class="acc-add-btn" onclick="addNewUser()">➕ Add User</button>
+    </div>
+  </div>`;
+
+  html += `<div class="card">
+    <div class="section-title"><span class="dot" style="background:#a78bfa"></span>User Accounts</div>`;
+
+  users.forEach(u => {
+    const isCurrent  = currentUser && currentUser.id === u.id;
+    const isEditing  = accEditingId === u.id;
+    const isGreat    = !!u.isGreatAdmin;
+
+    html += `<div class="acc-user-card" id="acc-card-${u.id}">
+      <div class="acc-user-top">
+        <div>
+          <span class="acc-user-name">${u.username}</span>
+          ${isCurrent ? '<span class="acc-current-badge">● You</span>' : ''}
+        </div>
+        ${isGreat
+          ? '<span class="acc-user-role role-great-admin">⭐ The Great Admin</span>'
+          : `<span class="acc-user-role ${roleClasses[u.role]||'role-admin'}">${roleLabels[u.role]||u.role}</span>`
+        }
+      </div>`;
+
+    if (isGreat && !isCurrent) {
+      // Great Admin card is read-only for everyone else
+      html += `<div style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic;">This account is protected and cannot be edited.</div>`;
+    } else if (isEditing) {
+      html += `<div class="acc-edit-form">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Username</div>
+        <input class="acc-edit-input" id="acc-edit-user-${u.id}" value="${u.username}" placeholder="Username" />
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">New Password <span style="color:#555">(leave blank to keep)</span></div>
+        <div class="pw-wrap"><input class="acc-edit-input" id="acc-edit-pass-${u.id}" type="password" placeholder="New password" /><button type="button" class="pw-eye" onclick="togglePw('acc-edit-pass-${u.id}',this)">${ICON_EYE}</button></div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Confirm Password</div>
+        <div class="pw-wrap"><input class="acc-edit-input" id="acc-edit-pass2-${u.id}" type="password" placeholder="Confirm new password" /><button type="button" class="pw-eye" onclick="togglePw('acc-edit-pass2-${u.id}',this)">${ICON_EYE}</button></div>
+        ${isGreat ? `<div id="acc-edit-pin-wrap-${u.id}" style="display:none;">
+          <div style="font-size:10px;color:var(--orange);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:8px 0 6px;">Secret PIN required to change password</div>
+          <div class="pw-wrap"><input class="acc-edit-input" id="acc-edit-pin-${u.id}" type="password" placeholder="Enter your secret PIN" autocomplete="off" /><button type="button" class="pw-eye" onclick="togglePw('acc-edit-pin-${u.id}',this)">${ICON_EYE}</button></div>
+        </div>` : ''}
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Role</div>
+        <select class="acc-role-sel" id="acc-edit-role-${u.id}">
+          <option value="admin"  ${u.role==='admin' ?'selected':''}>👑 Admin</option>
+          <option value="stall1" ${u.role==='stall1'?'selected':''}>🥗 Food Stall Only</option>
+          <option value="stall2" ${u.role==='stall2'?'selected':''}>🎲 Quest Stall Only</option>
+		  <option value="stats" ${u.role==='stats'?'selected':''}>📊 Stats Viewer</option>
+        </select>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="acc-btn acc-btn-save" onclick="saveUserEdit('${u.id}')">💾 Save</button>
+          <button class="acc-btn acc-btn-cancel" onclick="cancelUserEdit()">Cancel</button>
+        </div>
+      </div>`;
+    } else {
+      html += `<div class="acc-user-actions">
+        <button class="acc-btn acc-btn-edit" onclick="startEditUser('${u.id}')">✏️ Edit</button>
+        ${isGreat && isCurrent
+          ? `<button class="acc-btn acc-btn-del" onclick="deleteUser('${u.id}')">🗑 Remove My Account</button>`
+          : users.length > 1 && (!currentUser || currentUser.id !== u.id)
+            ? `<button class="acc-btn acc-btn-del" onclick="deleteUser('${u.id}')">🗑 Remove</button>`
+            : currentUser && currentUser.id === u.id
+              ? '<span style="font-size:10px;color:var(--muted)">Logged in as you</span>'
+              : '<span style="font-size:10px;color:var(--muted)">Last user — cannot delete</span>'
+        }
+      </div>`;
+    }
+    html += `</div>`;
+  });
+
+  html += `</div>`;
+
+  cont.innerHTML = html;
+}
+
+function renderRequests() {
+  const cont = document.getElementById('accounts-content');
+  if (!cont) return;
+  const reqs = getRequests().filter(r => r.status === 'pending');
+  if (reqs.length === 0) {
+    cont.innerHTML = `<div class="card" style="text-align:center;padding:32px 16px;">
+      <div style="font-size:32px;margin-bottom:10px;">✅</div>
+      <div style="font-size:15px;font-weight:700;color:var(--muted);">No pending requests</div>
+    </div>`;
+    return;
+  }
+  const roleLabels = { admin:'👑 Admin', stall1:'🥗 Food Stall', stall2:'🎲 Quest Stall', stats:'📊 Stats Viewer' };
+  const roleClass  = r => r.role==='admin'?'role-admin':r.role==='stall1'?'role-stall1':r.role==='stall2'?'role-stall2':'role-stats';
+  let html = `<div class="card"><div class="section-title"><span class="dot" style="background:var(--red)"></span>Pending Requests</div>`;
+  reqs.forEach(r => {
+    const date = new Date(r.createdAt).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+    const isLoginHelp = r.type === 'login_help';
+    const wantsUser   = r.changes && r.changes.includes('username');
+    const wantsPass   = r.changes && r.changes.includes('password');
+    const pwId        = 'req-pw-' + r.id;
+
+    html += `<div class="acc-user-card" style="border-left:3px solid var(--red);margin-bottom:12px;padding:14px;">
+      <!-- header row -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--text);">${r.username}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${date}</div>
+        </div>
+        <span class="acc-user-role ${roleClass(r)}" style="font-size:11px;white-space:nowrap;">${roleLabels[r.role]||r.role}</span>
+      </div>
+
+      <!-- phone -->
+      <div style="display:flex;align-items:center;gap:8px;background:#0a0704;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+        <span style="font-size:16px;">📞</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text);">${r.phone}</span>
+      </div>
+
+      <!-- what they need -->
+      <div style="background:#0a0704;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">Request</div>
+        ${isLoginHelp ? `
+          <div style="font-size:14px;color:var(--text);font-weight:600;">🔐 Cannot log in — needs admin help</div>
+          ${r.needSecretKey ? '<div style="font-size:12px;color:var(--gold);font-weight:700;margin-top:6px;">🗝 Also needs the App Secret Key</div>' : ''}
+          ${r.changes && r.changes.includes('forgot_password') ? '<div style="font-size:12px;color:var(--muted);margin-top:4px;">🔑 Forgot password</div>' : ''}
+        ` : `
+          ${wantsUser ? `<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;">
+            <span style="color:var(--muted);font-size:12px;">New Username</span><br>${r.newUsername || '—'}
+          </div>` : ''}
+          ${wantsPass ? `<div style="font-size:14px;font-weight:600;color:var(--text);">
+            <span style="color:var(--muted);font-size:12px;">New Password</span><br>
+            <span style="display:flex;align-items:center;gap:8px;margin-top:2px;">
+              <span id="${pwId}" style="font-family:monospace;letter-spacing:2px;">••••••••</span>
+              <button type="button" onclick="
+                var el=document.getElementById('${pwId}');
+                var shown=el.dataset.shown==='1';
+                el.textContent=shown?'••••••••':'${(r.newPassword||'').replace(/'/g,"\\'")}';
+                el.dataset.shown=shown?'0':'1';
+                this.innerHTML=shown?'${ICON_EYE.replace(/`/g,'\\`')}':'${ICON_EYE_OFF.replace(/`/g,'\\`')}';
+              " style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;display:flex;">${ICON_EYE}</button>
+            </span>
+          </div>` : ''}
+        `}
+      </div>
+
+      <!-- actions -->
+      <div style="display:flex;gap:8px;">
+        <button class="acc-btn acc-btn-edit" style="font-size:12px;padding:8px 14px;" onclick="startEditUser('${r.userId}');setAccInnerTab('users')">✏️ Go to Account</button>
+        <button class="acc-btn acc-btn-save" style="font-size:12px;padding:8px 14px;" onclick="markRequestResolved('${r.id}')">✅ Mark Resolved</button>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  cont.innerHTML = html;
+}
+
+function renderResolved() {
+  const cont = document.getElementById('accounts-content');
+  if (!cont) return;
+  const reqs = getRequests().filter(r => r.status === 'resolved').reverse();
+  if (reqs.length === 0) {
+    cont.innerHTML = `<div class="card" style="text-align:center;padding:32px 16px;">
+      <div style="font-size:32px;margin-bottom:10px;">📭</div>
+      <div style="font-size:15px;font-weight:700;color:var(--muted);">No resolved requests yet</div>
+    </div>`;
+    return;
+  }
+  const roleLabels = { admin:'👑 Admin', stall1:'🥗 Food Stall', stall2:'🎲 Quest Stall', stats:'📊 Stats Viewer' };
+  const roleClass  = r => r.role==='admin'?'role-admin':r.role==='stall1'?'role-stall1':r.role==='stall2'?'role-stall2':'role-stats';
+  let html = `<div class="card"><div class="section-title"><span class="dot" style="background:var(--green)"></span>Resolved Requests</div>`;
+  reqs.forEach(r => {
+    const created  = new Date(r.createdAt).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+    const resolved = r.resolvedAt ? new Date(r.resolvedAt).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '—';
+    const isLoginHelp = r.type === 'login_help';
+    const wantsUser   = r.changes && r.changes.includes('username');
+    const wantsPass   = r.changes && r.changes.includes('password');
+
+    html += `<div class="acc-user-card" style="border-left:3px solid var(--green);margin-bottom:12px;padding:14px;opacity:0.85;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--text);">${r.username}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Requested: ${created}</div>
+        </div>
+        <span class="acc-user-role ${roleClass(r)}" style="font-size:11px;white-space:nowrap;">${roleLabels[r.role]||r.role}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:#0a0704;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+        <span style="font-size:16px;">📞</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text);">${r.phone}</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">
+        ${isLoginHelp ? '🔐 Login help' : [wantsUser?'Username change':'', wantsPass?'Password change':''].filter(Boolean).join(' + ')}
+      </div>
+      <div style="font-size:12px;color:var(--green);font-weight:700;">✅ Resolved ${resolved}</div>
+    </div>`;
+  });
+  html += `</div>`;
+  cont.innerHTML = html;
+}
+
+function markRequestResolved(id) {
+  resolveRequest(id);
+  renderAccounts();
+  showToast('Request marked resolved ✓');
+}
+
+function startEditUser(id) {
+  accEditingId = id;
+  renderAccounts();
+  // Wire PIN show/hide for Great Admin after DOM renders
+  setTimeout(() => {
+    const passInp = document.getElementById('acc-edit-pass-' + id);
+    const pinWrap = document.getElementById('acc-edit-pin-wrap-' + id);
+    if (passInp && pinWrap) {
+      passInp.oninput = function() {
+        pinWrap.style.display = this.value ? 'block' : 'none';
+        if (!this.value) {
+          const pinInp = document.getElementById('acc-edit-pin-' + id);
+          if (pinInp) pinInp.value = '';
+        }
+      };
+    }
+  }, 0);
+}
+function cancelUserEdit() {
+  accEditingId = null;
+  renderAccounts();
+}
+
+async function saveUserEdit(id) {
+  const newUser = document.getElementById('acc-edit-user-' + id).value.trim();
+  const newPass = document.getElementById('acc-edit-pass-' + id).value;
+  const newPass2 = document.getElementById('acc-edit-pass2-' + id).value;
+  const newRole = document.getElementById('acc-edit-role-' + id).value;
+  if (!newUser) { showToast('Username cannot be empty'); return; }
+  if (newPass && newPass !== newPass2) { showToast('Passwords do not match'); return; }
+  const users = getUsers();
+  // Hard block: Great Admin cannot be edited by anyone else
+  const target = users.find(u => u.id === id);
+  if (target && target.isGreatAdmin && (!currentUser || currentUser.id !== id)) { showToast('The Great Admin cannot be edited here.'); return; }
+  // Great Admin changing their own password requires PIN
+  if (newPass && target && target.isGreatAdmin) {
+    const pinEl = document.getElementById('acc-edit-pin-' + id);
+    const pin = pinEl ? pinEl.value : '';
+    if (!pin) { showToast('Secret PIN required to change password'); return; }
+    const pinOk = (await hashPassword(pin, target.pinSalt)) === target.pinHash;
+    if (!pinOk) { showToast('Incorrect PIN'); return; }
+  }
+  // Check duplicate username (excluding self)
+  if (users.find(u => u.id !== id && u.username.toLowerCase() === newUser.toLowerCase())) {
+    showToast('Username already taken'); return;
+  }
+  const idx = users.findIndex(u => u.id === id);
+  if (idx === -1) return;
+  users[idx].username = newUser;
+  const passwordChanged = !!newPass;
+  if (newPass) {
+    const salt = randomSalt();
+    users[idx].salt = salt;
+    users[idx].passHash = await hashPassword(newPass, salt);
+    delete users[idx].password; // clear any legacy plain-text remnant
+  }
+  users[idx].role = newRole;
+  saveUsers(users);
+
+  // #10 — Auto-logout: if admin changed another user's password, push a
+  // force-logout signal keyed to that user's ID. The target device watches
+  // pt_force_logout in onCloudUpdate and logs itself out when it sees its own ID.
+  if (passwordChanged && (!currentUser || currentUser.id !== id)) {
+    const logoutKey = 'pt_force_logout';
+    const existing = (() => { try { return JSON.parse(store.get(logoutKey) || 'null') || {}; } catch { return {}; } })();
+    existing[id] = new Date().toISOString();
+    store.set(logoutKey, JSON.stringify(existing));
+    cloudPush(logoutKey);
+  }
+
+  // Auto-resolve any pending requests from this user
+  const reqs = getRequests();
+  let anyResolved = false;
+  reqs.forEach(r => {
+    if (r.userId === id && r.status === 'pending') {
+      r.status = 'resolved';
+      r.resolvedAt = new Date().toISOString();
+      anyResolved = true;
+    }
+  });
+  if (anyResolved) saveRequests(reqs);
+  // Update currentUser if editing self
+  if (currentUser && currentUser.id === id) {
+    const roleChanged = currentUser.role !== newRole;
+    currentUser.username = newUser;
+    currentUser.role = newRole;
+    saveSession(currentUser);
+    document.getElementById('user-bar-name').textContent = newUser;
+    const roleLabels = {
+  admin: '👑 Admin',
+  stall1: '🥗 Food Stall',
+  stall2: '🎲 Quest Stall',
+  stats: '📊 Stats Viewer'
+};
+    document.getElementById('user-bar-role').textContent = ' · ' + (roleLabels[newRole] || newRole);
+    if (roleChanged) applyPermissions();
+  }
+  accEditingId = null;
+  showToast('User updated ✓');
+  renderAccounts();
+}
+
+function deleteUser(id) {
+  const users = getUsers();
+  const u = users.find(u => u.id === id);
+  if (!u) return;
+
+  // Great Admin deleting themselves — require secret PIN
+  if (u.isGreatAdmin && currentUser && currentUser.id === id) {
+    showGreatAdminDeleteModal(id);
+    return;
+  }
+
+  // Normal users cannot delete themselves
+  if (currentUser && currentUser.id === id) { showToast('Cannot delete yourself'); return; }
+  if (users.length <= 1) { showToast('Cannot delete the only user'); return; }
+  if (!confirm(`Remove user "${u?.username}"?`)) return;
+  saveUsers(users.filter(u => u.id !== id));
+  showToast('User removed');
+  renderAccounts();
+}
+
+function showGreatAdminDeleteModal(id) {
+  // Inject a PIN modal overlay
+  const existing = document.getElementById('great-admin-pin-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'great-admin-pin-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px;';
+  modal.innerHTML = `
+    <div style="background:var(--card);border:2px solid var(--red);border-radius:20px;padding:24px 20px;width:100%;max-width:340px;box-shadow:0 28px 64px rgba(0,0,0,.7);">
+      <div style="font-size:16px;font-weight:800;color:var(--red);margin-bottom:6px;">&#9888; Delete Your Account</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">This will permanently remove your account. Enter your secret PIN to confirm.</div>
+      <div class="auth-label">Secret PIN</div>
+      <div class="pw-wrap"><input class="auth-input" id="great-admin-pin-input" type="password" placeholder="Enter secret PIN" autocomplete="off" /><button type="button" class="pw-eye" onclick="togglePw('great-admin-pin-input',this)">${ICON_EYE}</button></div>
+      <div style="font-size:11px;color:var(--red);min-height:16px;margin-bottom:14px;" id="great-admin-pin-err"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button class="btn btn-cancel" onclick="document.getElementById('great-admin-pin-modal').remove()">Cancel</button>
+        <button class="btn" style="background:var(--red);color:#fff;" onclick="confirmGreatAdminDelete('${id}')">Delete</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('great-admin-pin-input').focus();
+  document.getElementById('great-admin-pin-input').addEventListener('keydown', e => { if (e.key === 'Enter') confirmGreatAdminDelete(id); });
+}
+
+async function confirmGreatAdminDelete(id) {
+  const pin = document.getElementById('great-admin-pin-input').value;
+  const err = document.getElementById('great-admin-pin-err');
+  if (!pin) { err.textContent = 'PIN is required.'; return; }
+  const users = getUsers();
+  const u = users.find(u => u.id === id);
+  if (!u) { err.textContent = 'User not found.'; return; }
+  const hash = await hashPassword(pin, u.pinSalt);
+  if (hash !== u.pinHash) { err.textContent = 'Incorrect PIN.'; return; }
+  // PIN correct — delete the great admin and log out
+  document.getElementById('great-admin-pin-modal').remove();
+  saveUsers(users.filter(u => u.id !== id));
+  showToast('Account deleted');
+  logout();
+}
+
+async function addNewUser() {
+  const username = document.getElementById('acc-new-user').value.trim();
+  const password = document.getElementById('acc-new-pass').value;
+  const password2 = document.getElementById('acc-new-pass2').value;
+  const role = document.getElementById('acc-new-role').value;
+  const err = document.getElementById('acc-add-error');
+  if (!username) { err.textContent = 'Username is required.'; return; }
+  if (password.length < 3) { err.textContent = 'Password must be at least 3 characters.'; return; }
+  if (password !== password2) { err.textContent = 'Passwords do not match.'; return; }
+  const users = getUsers();
+  if (users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
+    err.textContent = 'Username already taken.'; return;
+  }
+  const salt = randomSalt();
+  const passHash = await hashPassword(password, salt);
+  users.push({ id: Date.now().toString(), username, salt, passHash, role });
+  saveUsers(users);
+  err.textContent = '';
+  document.getElementById('acc-new-user').value = '';
+  document.getElementById('acc-new-pass').value = '';
+  document.getElementById('acc-new-pass2').value = '';
+  const roleEl = document.getElementById('acc-new-role');
+  if (roleEl) roleEl.value = 'stall1';
+  showToast('User added ✓');
+  renderAccounts();
+}
+
+// ============================================================
+// EDIT PROFILE — Group 2 (stubs: modal CSS + logic coming next session)
+// ============================================================
+function openProfileModal() {
+  document.getElementById('profile-modal').style.display = 'flex';
+  // Pre-fill username
+  const inp = document.getElementById('profile-new-username');
+  if (inp && currentUser) inp.value = currentUser.username;
+  document.getElementById('profile-current-password').value = '';
+  document.getElementById('profile-new-password').value = '';
+  document.getElementById('profile-modal-error').textContent = '';
+  // Inject eye icons
+  const curEye = document.getElementById('profile-cur-eye');
+  const newEye = document.getElementById('profile-new-eye');
+  const pinEye = document.getElementById('profile-pin-eye');
+  if (curEye) curEye.innerHTML = ICON_EYE;
+  if (newEye) newEye.innerHTML = ICON_EYE;
+  if (pinEye) pinEye.innerHTML = ICON_EYE;
+  // For Great Admin: show PIN field when a new password is typed, hide otherwise
+  const pinWrap  = document.getElementById('profile-pin-wrap');
+  const pinInput = document.getElementById('profile-pin');
+  const newPwInp = document.getElementById('profile-new-password');
+  if (pinWrap && pinInput) {
+    pinWrap.style.display = 'none';
+    pinInput.value = '';
+    if (currentUser) {
+      const users = getUsers();
+      const me = users.find(u => u.id === currentUser.id);
+      if (me && me.isGreatAdmin) {
+        // Show PIN field whenever a new password is entered.
+        // Use oninput (not addEventListener) so it's safely overwritten on repeated modal opens.
+        newPwInp.oninput = function() {
+          pinWrap.style.display = this.value ? 'block' : 'none';
+          if (!this.value) pinInput.value = '';
+        };
+      } else {
+        newPwInp.oninput = null;
+      }
+    }
+  }
+}
+function closeProfileModal() {
+  document.getElementById('profile-modal').style.display = 'none';
+  // Reset PIN field and hide it
+  const pinWrap  = document.getElementById('profile-pin-wrap');
+  const pinInput = document.getElementById('profile-pin');
+  if (pinWrap)  pinWrap.style.display = 'none';
+  if (pinInput) pinInput.value = '';
+}
+
+async function saveProfileChanges() {
+  const errEl = document.getElementById('profile-modal-error');
+  errEl.textContent = '';
+
+  const newUsername = document.getElementById('profile-new-username').value.trim();
+  const currentPass = document.getElementById('profile-current-password').value;
+  const newPass     = document.getElementById('profile-new-password').value;
+
+  if (!newUsername) { errEl.textContent = 'Username cannot be empty.'; return; }
+  if (!currentPass) { errEl.textContent = 'Enter your current password to save changes.'; return; }
+
+  const users = getUsers();
+  const idx   = users.findIndex(u => u.id === currentUser.id);
+  if (idx === -1) { errEl.textContent = 'User not found — please log in again.'; return; }
+
+  const u = users[idx];
+
+  // Verify current password
+  let ok = false;
+  if (u.passHash) {
+    ok = (await hashPassword(currentPass, u.salt)) === u.passHash;
+  } else if (u.password !== undefined) {
+    ok = u.password === currentPass;
+  }
+  if (!ok) { errEl.textContent = 'Incorrect current password.'; return; }
+
+  // Great Admin: PIN required to change password
+  if (newPass && u.isGreatAdmin) {
+    const pin = (document.getElementById('profile-pin') || {}).value || '';
+    if (!pin) { errEl.textContent = 'Enter your secret PIN to change your password.'; return; }
+    const pinOk = (await hashPassword(pin, u.pinSalt)) === u.pinHash;
+    if (!pinOk) { errEl.textContent = 'Incorrect PIN.'; return; }
+  }
+
+  // Check duplicate username (excluding self)
+  if (users.find(x => x.id !== u.id && x.username.toLowerCase() === newUsername.toLowerCase())) {
+    errEl.textContent = 'That username is already taken.'; return;
+  }
+
+  // Apply changes
+  users[idx].username = newUsername;
+  if (newPass) {
+    if (newPass.length < 3) { errEl.textContent = 'New password must be at least 3 characters.'; return; }
+    const salt = randomSalt();
+    users[idx].salt     = salt;
+    users[idx].passHash = await hashPassword(newPass, salt);
+    delete users[idx].password;
+  }
+
+  saveUsers(users);
+
+  // Update live session
+  currentUser.username = newUsername;
+  saveSession(currentUser);
+  document.getElementById('user-bar-name').textContent = newUsername;
+
+  closeProfileModal();
+  showToast('Profile updated ✓');
+}
+
+function openProfileForgot() {
+  const existing = document.getElementById('profile-forgot-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'profile-forgot-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.87);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px;';
+  modal.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 18px 24px;width:100%;max-width:360px;box-shadow:0 28px 64px rgba(0,0,0,.7);">
+      <div style="font-size:16px;font-weight:800;color:var(--gold);margin-bottom:4px;">🔑 Request Credential Change</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Your request will be sent to the admin. They'll update your credentials shortly.</div>
+
+      <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">What do you want to change?</div>
+      <label style="display:flex;align-items:center;gap:10px;background:#0a0704;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;">
+        <input type="checkbox" id="forgot-chk-user" style="width:18px;height:18px;accent-color:var(--orange);cursor:pointer;">
+        <span style="font-size:13px;font-weight:600;">Change Username</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;background:#0a0704;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;cursor:pointer;">
+        <input type="checkbox" id="forgot-chk-pass" style="width:18px;height:18px;accent-color:var(--orange);cursor:pointer;">
+        <span style="font-size:13px;font-weight:600;">Change Password</span>
+      </label>
+
+      <div id="forgot-new-username-wrap" style="display:none;margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Requested New Username</div>
+        <input id="forgot-new-username" type="text" autocomplete="off" placeholder="Enter new username"
+          style="width:100%;background:#080503;border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:11px 13px;outline:none;">
+      </div>
+      <div id="forgot-new-pass-wrap" style="display:none;margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Requested New Password</div>
+        <div class="pw-wrap" style="margin-bottom:0;">
+          <input id="forgot-new-pass" type="password" placeholder="Enter new password"
+            style="width:100%;background:#080503;border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:11px 42px 11px 13px;outline:none;margin-bottom:0;">
+          <button type="button" class="pw-eye" style="top:50%;transform:translateY(-50%);" onclick="togglePw('forgot-new-pass',this)">${ICON_EYE}</button>
+        </div>
+      </div>
+
+      <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;margin-top:4px;">Your Phone Number</div>
+      <input id="forgot-phone" type="tel" autocomplete="off" placeholder="e.g. 9876543210"
+        style="width:100%;background:#080503;border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:11px 13px;outline:none;margin-bottom:14px;">
+
+      <div id="forgot-error" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:10px;"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button class="btn btn-cancel" onclick="document.getElementById('profile-forgot-modal').remove()">Cancel</button>
+        <button class="btn btn-confirm" onclick="submitProfileForgot()">Send Request</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  document.getElementById('forgot-chk-user').addEventListener('change', function() {
+    document.getElementById('forgot-new-username-wrap').style.display = this.checked ? '' : 'none';
+  });
+  document.getElementById('forgot-chk-pass').addEventListener('change', function() {
+    document.getElementById('forgot-new-pass-wrap').style.display = this.checked ? '' : 'none';
+  });
+  document.getElementById('forgot-phone').focus();
+}
+
+function submitProfileForgot() {
+  const errEl   = document.getElementById('forgot-error');
+  errEl.textContent = '';
+  const chkUser = document.getElementById('forgot-chk-user').checked;
+  const chkPass = document.getElementById('forgot-chk-pass').checked;
+  const phone   = document.getElementById('forgot-phone').value.trim();
+  const newUname = chkUser ? document.getElementById('forgot-new-username').value.trim() : null;
+  const newPass  = chkPass ? document.getElementById('forgot-new-pass').value.trim() : null;
+
+  if (!chkUser && !chkPass) { errEl.textContent = 'Select at least one thing to change.'; return; }
+  if (chkUser && !newUname) { errEl.textContent = 'New username cannot be empty.'; return; }
+  if (chkPass && !newPass)  { errEl.textContent = 'New password cannot be empty.'; return; }
+  if (!phone)               { errEl.textContent = 'Phone number is required.'; return; }
+
+  const changes = [];
+  if (chkUser) changes.push('username');
+  if (chkPass) changes.push('password');
+
+  saveRequest({
+    type: 'credential_change',
+    source: 'profile',
+    userId: currentUser.id,
+    username: currentUser.username,
+    role: currentUser.role,
+    phone,
+    changes,
+    newUsername: newUname || null,
+    newPassword: newPass  || null,
+  });
+
+  document.getElementById('profile-forgot-modal').remove();
+  closeProfileModal();
+  showToast('Request sent — admin will update your credentials ✓');
+}
+// ============================================================
+// REQUESTS SYSTEM — storage helpers
+// Requests are stored in pt_requests as an array of objects:
+// { id, type, source, status, createdAt, resolvedAt,
+//   userId?, username, role, phone, changes[], newUsername?, newPassword? }
+// ============================================================
+function getRequests() {
+  try { return JSON.parse(store.get('pt_requests') || 'null') || []; }
+  catch { return []; }
+}
+function saveRequests(reqs) {
+  store.set('pt_requests', JSON.stringify(reqs));
+  cloudPush('pt_requests');
+}
+function saveRequest(data) {
+  const reqs = getRequests();
+  reqs.push({
+    id: Date.now().toString(),
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    resolvedAt: null,
+    ...data,
+  });
+  saveRequests(reqs);
+}
+function resolveRequest(id) {
+  const reqs = getRequests();
+  const idx = reqs.findIndex(r => r.id === id);
+  if (idx === -1) return;
+  reqs[idx].status = 'resolved';
+  reqs[idx].resolvedAt = new Date().toISOString();
+  saveRequests(reqs);
+}
+
+(function migrate() {
+  const old = store.get('pt_state');
+  if (old && !store.get('pt_sales')) {
+    store.set('pt_sales', old);
+    store.remove('pt_state');
+  }
+})();
+
+// ============================================================
+// MODAL STATE
+// ============================================================
+let modalItem = null;
+let selectedCoupon = null;
+let selectedDrink = null;
+
+function openModal(itemId) {
+  const s = getSalesState();
+  const item = ALL_ITEMS[itemId];
+  modalItem = item;
+  selectedCoupon = null;
+  selectedDrink = null;
+
+  document.getElementById('modal-title').textContent = item.name;
+  document.getElementById('modal-sub').textContent = item.price > 0 ? `₹${item.price}` : item.sub;
+  document.getElementById('modal-count').textContent = s.counts[itemId] || 0;
+
+  const couponCheck = document.getElementById('coupon-check');
+  couponCheck.checked = false;
+  document.getElementById('coupon-picker').style.display = 'none';
+
+  const drinkSec = document.getElementById('modal-drink-section');
+  document.getElementById('drink-hint').classList.remove('show');
+  if (SPECIAL_WITH_DRINK.includes(itemId)) {
+    drinkSec.style.display = 'block';
+    buildDrinkOpts();
+  } else {
+    drinkSec.style.display = 'none';
+  }
+
+  const couponSec = document.getElementById('modal-coupon-section');
+  if (!item.type) {
+    couponSec.style.display = 'block';
+    buildCouponOpts(itemId);
+  } else {
+    couponSec.style.display = 'none';
+  }
+
+  document.getElementById('modal').classList.add('open');
+}
+
+function buildDrinkOpts() {
+  const opts = document.getElementById('drink-opts');
+  opts.innerHTML = '';
+  DRINK_OPTIONS.forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'drink-opt';
+    div.dataset.id = d.id;
+    div.innerHTML = `<div>${d.label}</div>`;
+    div.onclick = () => selectDrink(d.id, div);
+    opts.appendChild(div);
+  });
+}
+
+function selectDrink(id, el) {
+  document.querySelectorAll('.drink-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedDrink = id;
+  document.getElementById('drink-hint').classList.remove('show');
+}
+
+function buildCouponOpts(itemId) {
+  const opts = document.getElementById('coupon-opts');
+  opts.innerHTML = '';
+  COUPONS.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'coupon-opt';
+    div.dataset.id = c.id;
+    div.innerHTML = `<div>${c.label}</div><div class="valid-on">${c.validOn}</div>`;
+    div.onclick = () => selectCoupon(c.id, div);
+    opts.appendChild(div);
+  });
+}
+
+function selectCoupon(id, el) {
+  document.querySelectorAll('.coupon-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedCoupon = id;
+}
+
+function toggleCoupon() {
+  const ch = document.getElementById('coupon-check');
+  ch.checked = !ch.checked;
+  updateCouponUI();
+}
+function updateCouponUI() {
+  const ch = document.getElementById('coupon-check');
+  document.getElementById('coupon-picker').style.display = ch.checked ? 'block' : 'none';
+  if (!ch.checked) selectedCoupon = null;
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  modalItem = null;
+}
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+
+function confirmModal() {
+  if (!modalItem) return;
+  if (SPECIAL_WITH_DRINK.includes(modalItem.id) && !selectedDrink) {
+    document.getElementById('drink-hint').classList.add('show');
+    return;
+  }
+  const s = getSalesState();
+  s.counts[modalItem.id] = (s.counts[modalItem.id] || 0) + 1;
+  if (SPECIAL_WITH_DRINK.includes(modalItem.id) && selectedDrink) {
+    if (!s.drink_counts) s.drink_counts = {};
+    if (!s.drink_counts[modalItem.id]) s.drink_counts[modalItem.id] = {};
+    s.drink_counts[modalItem.id][selectedDrink] = (s.drink_counts[modalItem.id][selectedDrink] || 0) + 1;
+  }
+  if (s.coupon_counts && s.coupon_counts[modalItem.id] !== undefined) {
+    const ch = document.getElementById('coupon-check');
+    if (ch && ch.checked && selectedCoupon) {
+      const amt = selectedCoupon.replace('coupon_','').replace('off','');
+      s.coupon_counts[modalItem.id][amt] = (s.coupon_counts[modalItem.id][amt] || 0) + 1;
+    } else if (ch) {
+      s.coupon_counts[modalItem.id]['none'] = (s.coupon_counts[modalItem.id]['none'] || 0) + 1;
+    }
+  }
+  const drinkLabel = selectedDrink ? ` + ${DRINK_OPTIONS.find(d=>d.id===selectedDrink)?.label}` : '';
+  saveSalesState(s);
+  showToast(`+1 ${modalItem.name}${drinkLabel}`);
+  closeModal();
+  renderAll();
+}
+
+// ============================================================
+// RENDER HELPERS
+// ============================================================
+function renderItemRow(containerId, items, cssClass) {
+  const s = getSalesState();
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  cont.innerHTML = '';
+  items.forEach(item => {
+    const cnt = s.counts[item.id] || 0;
+    const row = document.createElement('div');
+    row.className = 'item-row' + (cssClass ? ' ' + cssClass : '');
+    let badges = '';
+    if (item.hot) badges += `<span class="badge badge-hot">HOT</span> `;
+    if (item.rare) badges += `<span class="badge badge-rare">RARE</span> `;
+    row.innerHTML = `
+      <div style="flex:1;min-width:0">
+        <div class="item-name">${badges}${item.name}</div>
+        <div class="item-sub">${item.sub}</div>
+      </div>
+      ${item.price > 0 ? `<div class="item-price">₹${item.price}</div>` : ''}
+      <div class="item-count">${cnt}</div>
+    `;
+    row.onclick = () => openModal(item.id);
+    cont.appendChild(row);
+  });
+}
+
+function renderFood() {
+  renderItemRow('food-crunch', FOOD_ITEMS.crunch);
+  renderItemRow('food-chaat', FOOD_ITEMS.chaat);
+  renderItemRow('food-specials', FOOD_ITEMS.specials);
+  renderItemRow('food-drinks', FOOD_ITEMS.drinks);
+  updateStallTotal('stall1');
+}
+function renderQuest() {
+  renderItemRow('quest-games', QUEST_ITEMS.games, 'game');
+  renderItemRow('quest-collectibles', QUEST_ITEMS.collectibles, 'collectible');
+  renderItemRow('quest-rewards', QUEST_ITEMS.rewards, 'reward');
+  renderItemRow('quest-coupons', QUEST_ITEMS.coupons, 'coupon');
+  updateStallTotal('stall2');
+}
+function updateStallTotal(stall) {
+  // Reuses the same counting logic as the admin stats (calcStats) so the number
+  // shown here always matches what the admin sees, just placed where staff can see it live.
+  const el = document.getElementById(stall + '-total-sold');
+  if (el) el.textContent = calcStats(stall).transactions;
+}
+
+// ============================================================
+// COST PRICE SECTION
+// ============================================================
+let cpUnlocked = false;
+
+function toggleCostLock() {
+  cpUnlocked = !cpUnlocked;
+  const btn = document.getElementById('cp-lock-btn');
+  const saveBtn = document.getElementById('cp-save-btn');
+  if (cpUnlocked) {
+    btn.textContent = '🔓 Unlocked';
+    btn.classList.add('unlocked');
+    saveBtn.style.display = 'block';
+  } else {
+    btn.textContent = '🔒 Locked';
+    btn.classList.remove('unlocked');
+    saveBtn.style.display = 'none';
+  }
+  renderCostPrices();
+}
+
+function renderCostPrices() {
+  const costs = getCostState();
+  const cont = document.getElementById('cp-items-list');
+  let html = '';
+  COST_ITEMS.forEach(group => {
+    html += `<div class="cp-category-label">${group.category}</div>`;
+    group.items.forEach(item => {
+      const cp = costs[item.id] !== undefined ? costs[item.id] : '';
+      const margin = (cp !== '' && cp !== null && !isNaN(cp) && item.price > 0)
+        ? item.price - Number(cp)
+        : null;
+      let pillHtml = '';
+      if (margin !== null) {
+        const pct = ((margin / item.price) * 100).toFixed(0);
+        const cls = margin > 0 ? 'pos' : margin < 0 ? 'neg' : 'zero';
+        pillHtml = `<span class="profit-pill ${cls}">+₹${margin} (${pct}%)</span>`;
+      }
+      if (cpUnlocked) {
+        html += `<div class="cp-item">
+          <div>
+            <div class="cp-name">${item.name}</div>
+            <div class="cp-price-tag">Sell: ₹${item.price} ${pillHtml}</div>
+          </div>
+          <div class="cp-input-wrap">
+            <span style="font-size:13px;color:var(--muted);">₹</span>
+            <input class="cp-input" type="number" id="cp_${item.id}" value="${cp}" min="0" placeholder="0" />
+          </div>
+        </div>`;
+      } else {
+        const dispVal = (cp !== '' && cp !== null && !isNaN(Number(cp)) && cp !== 0 && cp !== '0') ? `₹${cp}` : '—';
+        html += `<div class="cp-item">
+          <div>
+            <div class="cp-name">${item.name}</div>
+            <div class="cp-price-tag">Sell: ₹${item.price} ${pillHtml}</div>
+          </div>
+          <div class="cp-locked-val">${dispVal}</div>
+        </div>`;
+      }
+    });
+  });
+  cont.innerHTML = html;
+}
+
+function saveCostPrices() {
+  const costs = getCostState();
+  COST_ITEMS.forEach(group => {
+    group.items.forEach(item => {
+      const inp = document.getElementById('cp_' + item.id);
+      if (inp) {
+        const val = inp.value.trim();
+        costs[item.id] = val === '' ? '' : Number(val);
+      }
+    });
+  });
+  saveCostState(costs);
+  cpUnlocked = false;
+  document.getElementById('cp-lock-btn').textContent = '🔒 Locked';
+  document.getElementById('cp-lock-btn').classList.remove('unlocked');
+  document.getElementById('cp-save-btn').style.display = 'none';
+  renderCostPrices();
+  showToast('Cost prices saved!');
+}
+
+// ============================================================
+// ADMIN SUB-TABS
+// ============================================================
+let adminSubTab = 'stats';
+
+function setAdminSubTab(tab, el) {
+
+  // Stats Viewer can only access Stats
+  if (
+    currentUser &&
+    currentUser.role === 'stats' &&
+    tab !== 'stats'
+  ) {
+    return;
+  }
+
+  adminSubTab = tab;
+
+  document
+    .querySelectorAll('.admin-subtab')
+    .forEach(e => e.classList.remove('active'));
+
+  if (el) {
+    el.classList.add('active');
+  }
+
+  document
+    .querySelectorAll('.admin-subpage')
+    .forEach(p => p.classList.remove('active'));
+
+  document
+    .getElementById('admin-sub-' + tab)
+    .classList.add('active');
+
+  if (tab === 'costs') renderCostPrices();
+  if (tab === 'inventory') renderInventory();
+  if (tab === 'stats') renderAdmin();
+  if (tab === 'accounts') renderAccounts();
+}
+
+// ============================================================
+// INVENTORY
+// ============================================================
+let invUnlocked = false;
+
+function toggleInvLock() {
+  invUnlocked = !invUnlocked;
+  const btn = document.getElementById('inv-lock-btn');
+  const saveBtn = document.getElementById('inv-save-btn');
+  if (invUnlocked) {
+    btn.textContent = '🔓 Unlocked';
+    btn.classList.add('unlocked');
+    saveBtn.style.display = 'block';
+  } else {
+    btn.textContent = '🔒 Locked';
+    btn.classList.remove('unlocked');
+    saveBtn.style.display = 'none';
+  }
+  renderInventory();
+}
+
+function renderInventory() {
+  const inv = getInvState();
+  const cont = document.getElementById('inv-items-list');
+  if (!cont) return;
+  let html = '';
+  let grandTotal = 0;
+
+  COST_ITEMS.forEach(group => {
+    html += `<div class="cp-category-label">${group.category}</div>`;
+    group.items.forEach(item => {
+      const entry = inv[item.id] || { qty: '', cost: '' };
+      const qty = entry.qty !== undefined ? entry.qty : '';
+      const cost = entry.cost !== undefined ? entry.cost : '';
+      const total = (qty !== '' && cost !== '' && !isNaN(Number(qty)) && !isNaN(Number(cost)))
+        ? Number(qty) * Number(cost) : null;
+      if (total !== null) grandTotal += total;
+
+      if (invUnlocked) {
+        html += `<div class="inv-item">
+          <div>
+            <div class="inv-name">${item.name}</div>
+            <div class="inv-total-tag">Sell: ₹${item.price} · Total: <span id="inv-total-${item.id}" style="color:#a78bfa;font-weight:700">${total !== null ? '₹'+total : '—'}</span></div>
+          </div>
+          <div class="inv-inputs">
+            <div class="inv-input-group">
+              <div class="inv-input-label">Qty</div>
+              <input class="inv-input" type="number" id="inv_qty_${item.id}" value="${qty}" min="0" placeholder="0" oninput="updateInvTotal('${item.id}')" />
+            </div>
+            <div class="inv-input-group">
+              <div class="inv-input-label">Cost ₹</div>
+              <input class="inv-input" type="number" id="inv_cost_${item.id}" value="${cost}" min="0" placeholder="0" oninput="updateInvTotal('${item.id}')" />
+            </div>
+          </div>
+        </div>`;
+      } else {
+        const qtyDisp = (qty !== '' && qty !== '0' && qty !== 0) ? qty : '—';
+        const costDisp = (cost !== '' && cost !== '0' && cost !== 0) ? '₹'+cost+'/ea' : '—';
+        const totalDisp = total !== null && total > 0 ? '₹'+total : '—';
+        html += `<div class="inv-item">
+          <div>
+            <div class="inv-name">${item.name}</div>
+            <div class="inv-total-tag">Sell: ₹${item.price}</div>
+          </div>
+          <div class="inv-locked-vals">
+            <span class="inv-locked-qty">${qtyDisp}</span>
+            <span class="inv-locked-cost">${costDisp}</span>
+            <span class="inv-locked-total">${totalDisp}</span>
+          </div>
+        </div>`;
+      }
+    });
+  });
+
+  cont.innerHTML = html;
+  const grandEl = document.getElementById('inv-grand-val');
+  if (grandEl) grandEl.textContent = '₹' + grandTotal;
+}
+
+function updateInvTotal(itemId) {
+  const qtyEl = document.getElementById('inv_qty_' + itemId);
+  const costEl = document.getElementById('inv_cost_' + itemId);
+  const totalEl = document.getElementById('inv-total-' + itemId);
+  if (!qtyEl || !costEl || !totalEl) return;
+  const q = Number(qtyEl.value);
+  const c = Number(costEl.value);
+  if (qtyEl.value !== '' && costEl.value !== '' && !isNaN(q) && !isNaN(c)) {
+    totalEl.textContent = '₹' + (q * c);
+  } else {
+    totalEl.textContent = '—';
+  }
+  // update grand total live
+  let grand = 0;
+  COST_ITEMS.forEach(group => {
+    group.items.forEach(item => {
+      const qe = document.getElementById('inv_qty_' + item.id);
+      const ce = document.getElementById('inv_cost_' + item.id);
+      if (qe && ce && qe.value !== '' && ce.value !== '') {
+        const qt = Number(qe.value); const ct = Number(ce.value);
+        if (!isNaN(qt) && !isNaN(ct)) grand += qt * ct;
+      }
+    });
+  });
+  const grandEl = document.getElementById('inv-grand-val');
+  if (grandEl) grandEl.textContent = '₹' + grand;
+}
+
+function saveInventory() {
+  const inv = getInvState();
+  COST_ITEMS.forEach(group => {
+    group.items.forEach(item => {
+      const qe = document.getElementById('inv_qty_' + item.id);
+      const ce = document.getElementById('inv_cost_' + item.id);
+      if (qe && ce) {
+        inv[item.id] = {
+          qty:  qe.value  === '' ? '' : Number(qe.value),
+          cost: ce.value  === '' ? '' : Number(ce.value),
+        };
+      }
+    });
+  });
+  saveInvState(inv);
+  invUnlocked = false;
+  document.getElementById('inv-lock-btn').textContent = '🔒 Locked';
+  document.getElementById('inv-lock-btn').classList.remove('unlocked');
+  document.getElementById('inv-save-btn').style.display = 'none';
+  renderInventory();
+  showToast('Inventory saved!');
+}
+
+function calcInventoryValue() {
+  const inv = getInvState();
+  let total = 0;
+  COST_ITEMS.forEach(group => {
+    group.items.forEach(item => {
+      const entry = inv[item.id] || {};
+      const qty = entry.qty;
+      const cost = entry.cost;
+      if (qty !== '' && cost !== '' && qty !== undefined && cost !== undefined && !isNaN(Number(qty)) && !isNaN(Number(cost))) {
+        total += Number(qty) * Number(cost);
+      }
+    });
+  });
+  return total;
+}
+
+// ============================================================
+// ADMIN STATS
+// ============================================================
+let adminTab = 'all';
+
+function setAdminTab(tab, el) {
+  adminTab = tab;
+  document.querySelectorAll('.stall-tab').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  renderAdmin();
+}
+
+function calcStats(filter) {
+  const s = getSalesState();
+  const costs = getCostState();
+  let revenue = 0, transactions = 0, couponsSaved = 0, totalCost = 0;
+  const details = [];
+
+  let itemArrays = [];
+  if (filter === 'stall1' || filter === 'all') Object.values(FOOD_ITEMS).forEach(arr => itemArrays.push(...arr));
+  if (filter === 'stall2' || filter === 'all') Object.values(QUEST_ITEMS).forEach(arr => itemArrays.push(...arr));
+
+  itemArrays.forEach(item => {
+    const cnt = s.counts[item.id] || 0;
+    if (cnt === 0) return;
+    const grossRev = cnt * item.price;
+    let discounted = 0;
+    if (s.coupon_counts && s.coupon_counts[item.id]) {
+      const cc = s.coupon_counts[item.id];
+      discounted = (cc['5']||0)*5 + (cc['10']||0)*10 + (cc['15']||0)*15 + (cc['20']||0)*20;
+    }
+    const net = grossRev - discounted;
+    revenue += net;
+    couponsSaved += discounted;
+    transactions += cnt;
+    // cost
+    const cp = costs[item.id];
+    const itemCost = (cp !== undefined && cp !== '' && !isNaN(Number(cp))) ? Number(cp) * cnt : null;
+    if (itemCost !== null) totalCost += itemCost;
+    details.push({ ...item, cnt, grossRev, discounted, net, itemCost });
+  });
+
+  const hasCost = details.some(d => d.itemCost !== null);
+  const profit = hasCost ? revenue - totalCost : null;
+  return { revenue, transactions, couponsSaved, details, totalCost, profit, hasCost };
+}
+
+function renderAdmin() {
+  const header = document.getElementById('admin-page-header');
+  if (header) {
+    header.textContent = currentUser?.role === 'stats' ? '📊 Statistics Dashboard' : '📊 Admin';
+  }
+  // NOTE: do NOT touch admin-page-sub here — setRtStatus manages the dot and status text.
+  const cont = document.getElementById('admin-content');
+  const stats = calcStats(adminTab);
+  const s1 = calcStats('stall1');
+  const s2 = calcStats('stall2');
+  const { revenue, transactions, couponsSaved, details, totalCost, profit, hasCost } = stats;
+
+  let html = '';
+
+  // Inventory value
+  const invValue = calcInventoryValue();
+  const invHasData = invValue > 0;
+
+  // Top stat block
+  const profitHtml = profit !== null
+    ? `<div class="stat-box wide">
+        <div class="stat-label">💡 Profit (Revenue − Cost)</div>
+        <div class="stat-val ${profit >= 0 ? 'cyan' : 'red'}" style="font-size:28px">₹${Math.abs(profit)}</div>
+        ${totalCost > 0 ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">Cost: ₹${totalCost} · Margin: ${revenue > 0 ? ((profit/revenue)*100).toFixed(1) : 0}%</div>` : ''}
+      </div>`
+    : `<div class="stat-box wide" style="background:#0a0a08">
+        <div class="stat-label">💡 Profit</div>
+        <div style="font-size:12px;color:var(--muted);padding-top:4px">Set cost prices to see profit</div>
+      </div>`;
+
+  html += `<div class="card">
+    <div class="section-title"><span class="dot"></span>${adminTab==='all'?'Combined Total':adminTab==='stall1'?'🥗 Food Stall':'🎲 Quest Stall'}</div>
+    <div class="stat-grid">
+      <div class="stat-box wide"><div class="stat-label">Total Revenue (after discounts)</div><div class="revenue-big">₹${revenue}</div></div>
+      <div class="stat-box"><div class="stat-label">🛒 Total Items Sold</div><div class="stat-val orange">${transactions}</div></div>
+      <div class="stat-box"><div class="stat-label">Coupons Saved</div><div class="stat-val purple">₹${couponsSaved}</div></div>
+      <div class="stat-box"><div class="stat-label">Gross Revenue</div><div class="stat-val">${revenue+couponsSaved}</div></div>
+      ${hasCost ? `<div class="stat-box"><div class="stat-label">💸 Sold Cost (total)</div><div class="stat-val red">₹${totalCost}</div></div>` : ''}
+      ${invHasData ? `<div class="stat-box"><div class="stat-label">📦 Inventory Value</div><div class="stat-val" style="color:#a78bfa">₹${invValue}</div></div>` : ''}
+      ${profitHtml}
+    </div>
+  </div>`;
+
+  // Per stall (only in All view)
+  if (adminTab === 'all') {
+    const combProfit = (s1.profit !== null || s2.profit !== null)
+      ? (s1.profit||0) + (s2.profit||0) : null;
+    html += `<div class="card">
+      <div class="section-title"><span class="dot"></span>Per Stall</div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-label">🥗 Food Revenue</div><div class="stat-val green">₹${s1.revenue}</div></div>
+        <div class="stat-box"><div class="stat-label">🎲 Quest Revenue</div><div class="stat-val orange">₹${s2.revenue}</div></div>
+        ${s1.profit !== null ? `<div class="stat-box"><div class="stat-label">🥗 Food Profit</div><div class="stat-val ${s1.profit>=0?'cyan':'red'}">₹${s1.profit}</div></div>` : ''}
+        ${s2.profit !== null ? `<div class="stat-box"><div class="stat-label">🎲 Quest Profit</div><div class="stat-val ${s2.profit>=0?'cyan':'red'}">₹${s2.profit}</div></div>` : ''}
+        <div class="stat-box"><div class="stat-label">🥗 Food Items Sold</div><div class="stat-val">${s1.transactions}</div></div>
+        <div class="stat-box"><div class="stat-label">🎲 Quest Items Sold</div><div class="stat-val">${s2.transactions}</div></div>
+      </div>
+    </div>`;
+  }
+
+  // Item breakdown
+  if (details.length > 0) {
+    html += `<div class="card"><div class="section-title"><span class="dot"></span>Item Breakdown</div>`;
+    details.forEach(d => {
+      const profitLine = d.itemCost !== null
+        ? `<div style="font-size:10px;color:${d.net-d.itemCost>=0?'var(--profit)':'var(--red)'}">profit: ₹${d.net - d.itemCost}</div>`
+        : '';
+      html += `<div class="admin-item-row">
+        <div>
+          <div class="admin-item-name">${d.name}</div>
+          ${d.discounted > 0 ? `<div style="font-size:10px;color:var(--green)">-₹${d.discounted} coupons</div>` : ''}
+          ${profitLine}
+        </div>
+        <div style="text-align:right">
+          <div class="admin-item-count">×${d.cnt}</div>
+          <div class="admin-item-rev">₹${d.net}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div class="card" style="text-align:center;color:var(--muted);padding:30px">No sales recorded yet</div>`;
+  }
+
+  // Coupons issued
+  const s = getSalesState();
+  const couponIssued = QUEST_ITEMS.coupons.map(c => ({ ...c, cnt: s.counts[c.id]||0 })).filter(c=>c.cnt>0);
+  if (couponIssued.length > 0) {
+    html += `<div class="card"><div class="section-title"><span class="dot" style="background:var(--green)"></span>Coupons Issued (Quest)</div>`;
+    couponIssued.forEach(c => {
+      html += `<div class="admin-item-row"><div class="admin-item-name">${c.name}</div><div class="admin-item-count">${c.cnt}</div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Drinks for specials
+  const drinkCounts = s.drink_counts || {};
+  const specialDrinkRows = [];
+  SPECIAL_WITH_DRINK.forEach(sid => {
+    const item = ALL_ITEMS[sid];
+    if (!item) return;
+    const dc = drinkCounts[sid];
+    if (!dc) return;
+    DRINK_OPTIONS.forEach(d => {
+      const cnt = dc[d.id] || 0;
+      if (cnt > 0) specialDrinkRows.push({ special: item.name, drink: d.label, cnt });
+    });
+  });
+  if (specialDrinkRows.length > 0) {
+    html += `<div class="card"><div class="section-title"><span class="dot" style="background:#38bdf8"></span>🥤 Drinks Taken (Specials)</div>`;
+    specialDrinkRows.forEach(r => {
+      html += `<div class="admin-item-row">
+        <div>
+          <div class="admin-item-name">${r.drink}</div>
+          <div style="font-size:10px;color:var(--muted)">with ${r.special}</div>
+        </div>
+        <div class="admin-item-count">×${r.cnt}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  cont.innerHTML = html;
+}
+
+// ============================================================
+// RESET LOGIC
+// ============================================================
+function initResetConfirm(type) {
+  // Hide all other confirm panels first
+  ['sales', 'data', 'full'].filter(t => t !== type).forEach(t => {
+    const el = document.getElementById('reset-confirm-' + t);
+    if (el) el.style.display = 'none';
+  });
+  const el = document.getElementById('reset-confirm-' + type);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function cancelReset(type) {
+  document.getElementById('reset-confirm-' + type).style.display = 'none';
+}
+function doReset(type) {
+  document.getElementById('reset-confirm-' + type).style.display = 'none';
+
+  // Always re-lock UI
+  cpUnlocked = false;
+  invUnlocked = false;
+  const cpBtn = document.getElementById('cp-lock-btn');
+  if (cpBtn) { cpBtn.textContent = '🔒 Locked'; cpBtn.classList.remove('unlocked'); }
+  const cpSave = document.getElementById('cp-save-btn');
+  if (cpSave) cpSave.style.display = 'none';
+  const invBtn = document.getElementById('inv-lock-btn');
+  if (invBtn) { invBtn.textContent = '🔒 Locked'; invBtn.classList.remove('unlocked'); }
+  const invSave = document.getElementById('inv-save-btn');
+  if (invSave) invSave.style.display = 'none';
+
+  if (type === 'sales') {
+    // Sales only — keep costs, inventory, accounts
+    store.remove('pt_sales');
+    store.remove('pt_state');
+    cloudDelete('pt_sales');
+    showToast('Sales data reset ✓');
+    renderAll();
+
+  } else if (type === 'data') {
+    // All data — sales + costs + inventory + stats, but KEEP accounts
+    store.remove('pt_sales');
+    store.remove('pt_costs');
+    store.remove('pt_inventory');
+    store.remove('pt_state');
+    cloudDelete('pt_sales');
+    cloudDelete('pt_costs');
+    cloudDelete('pt_inventory');
+    // Sweep any other pt_ keys except pt_users and pt_session (this reset keeps the user logged in)
+    try {
+      const keysToDelete = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('pt_') && k !== 'pt_users' && k !== 'pt_session') keysToDelete.push(k);
+      }
+      keysToDelete.forEach(k => localStorage.removeItem(k));
+    } catch(e) {}
+    showToast('All data reset. Accounts kept ✓');
+    renderAll();
+
+  } else {
+    // Full reset — wipe everything BUT re-insert the Great Admin first so there's never a gap
+    const allUsers = getUsers();
+    const greatAdmin = allUsers.find(u => u.isGreatAdmin);
+
+    store.remove('pt_sales');
+    store.remove('pt_costs');
+    store.remove('pt_inventory');
+    store.remove('pt_users');
+    store.remove('pt_state');
+    cloudDelete('pt_sales');
+    cloudDelete('pt_costs');
+    cloudDelete('pt_inventory');
+    cloudDelete('pt_users');
+    try {
+      const keysToDelete = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('pt_')) keysToDelete.push(k);
+      }
+      keysToDelete.forEach(k => localStorage.removeItem(k));
+    } catch(e) {}
+
+    // Re-insert Great Admin immediately so "no users" state never exists
+    if (greatAdmin) {
+      saveUsers([greatAdmin]);
+    }
+
+    // Log out and go back to login (or setup if somehow no great admin)
+    currentUser = null;
+    clearSession();
+    document.getElementById('user-bar').classList.remove('visible');
+    document.getElementById('main-nav').style.display = 'none';
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    showToast('Everything wiped ✓');
+    // Delay long enough for cloud write from saveUsers to settle before authInit re-fetches
+    setTimeout(() => { authInit(); }, 2000);
+  }
+}
+
+// ============================================================
+// PAGE ROUTING & AUTO REFRESH
+// ============================================================
+
+function renderAll() {
+  // For stats role: always ensure page-admin and stats subpage are active before rendering
+  if (currentUser && currentUser.role === 'stats') {
+    const pageAdmin = document.getElementById('page-admin');
+    if (pageAdmin && !pageAdmin.classList.contains('active')) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      pageAdmin.classList.add('active');
+    }
+    document.querySelectorAll('.admin-subpage').forEach(p => p.classList.remove('active'));
+    const sp = document.getElementById('admin-sub-stats');
+    if (sp) sp.classList.add('active');
+    adminSubTab = 'stats';
+  }
+  renderFood();
+  renderQuest();
+  updateRequestNotifs();
+  if (adminSubTab === 'stats') renderAdmin();
+  if (adminSubTab === 'costs') renderCostPrices();
+  if (adminSubTab === 'inventory') renderInventory();
+  if (adminSubTab === 'accounts') renderAccounts();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✓ ' + msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+setInterval(() => {
+  if (currentUser && document.getElementById('page-admin').classList.contains('active')) {
+    if (adminSubTab === 'stats') renderAdmin();
+  }
+}, 3000);
+
+// ============================================================
+// PDF BUSINESS REPORT
+// ============================================================
+async function downloadBusinessPDF() {
+  const btn = document.getElementById('pdf-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-icon">⏳</span> Generating PDF…';
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const pageW = 210, pageH = 297, margin = 14;
+    const contentW = pageW - margin * 2;
+    let y = 0;
+
+    // ---- helpers ----
+    const hex2rgb = h => { const n = parseInt(h.replace('#',''),16); return [n>>16&255, n>>8&255, n&255]; };
+    const colors = {
+      bg:     [13,  13,  13],
+      card:   [26,  18,  8],
+      orange: [232, 96,  10],
+      gold:   [245, 200, 66],
+      green:  [46,  204, 113],
+      purple: [124, 58,  237],
+      red:    [229, 62,  62],
+      cyan:   [34,  211, 238],
+      text:   [245, 234, 213],
+      muted:  [168, 144, 112],
+      border: [58,  42,  16],
+    };
+
+    function addPage() {
+      doc.addPage();
+      y = margin;
+      // page background
+      doc.setFillColor(...colors.bg);
+      doc.rect(0, 0, pageW, pageH, 'F');
+    }
+
+    function checkPage(needed) {
+      if (y + needed > pageH - margin) addPage();
+    }
+
+    function sectionTitle(label, color = colors.gold) {
+      checkPage(10);
+      doc.setFillColor(...colors.orange);
+      doc.circle(margin + 2, y + 2, 1.5, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(...color);
+      doc.text(label.toUpperCase(), margin + 6, y + 3.5);
+      y += 8;
+    }
+
+    function statBox(label, value, valColor = colors.gold, wide = false) {
+      const boxW = wide ? contentW : (contentW - 4) / 2;
+      checkPage(18);
+      doc.setFillColor(10, 7, 4);
+      doc.setDrawColor(...colors.border);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(margin, y, boxW, 15, 2, 2, 'FD');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(...colors.muted);
+      doc.text(label.toUpperCase(), margin + 4, y + 5);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(...valColor);
+      doc.text(String(value), margin + 4, y + 12);
+      if (!wide) y += 17;
+      else y += 17;
+    }
+
+    function twoStatBoxes(l1, v1, c1, l2, v2, c2) {
+      checkPage(18);
+      const bw = (contentW - 4) / 2;
+      // box 1
+      doc.setFillColor(10, 7, 4);
+      doc.setDrawColor(...colors.border);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(margin, y, bw, 15, 2, 2, 'FD');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(...colors.muted);
+      doc.text(l1.toUpperCase(), margin + 4, y + 5);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(...c1);
+      doc.text(String(v1), margin + 4, y + 12);
+      // box 2
+      const x2 = margin + bw + 4;
+      doc.setFillColor(10, 7, 4);
+      doc.roundedRect(x2, y, bw, 15, 2, 2, 'FD');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(...colors.muted);
+      doc.text(l2.toUpperCase(), x2 + 4, y + 5);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(...c2);
+      doc.text(String(v2), x2 + 4, y + 12);
+      y += 17;
+    }
+
+    function divider() {
+      checkPage(4);
+      doc.setDrawColor(...colors.border);
+      doc.setLineWidth(0.3);
+      doc.line(margin, y, margin + contentW, y);
+      y += 4;
+    }
+
+    function itemRow(name, sub, count, revenue, profitLine) {
+      checkPage(12);
+      doc.setFillColor(10, 7, 4);
+      doc.setDrawColor(...colors.border);
+      doc.setLineWidth(0.25);
+      doc.roundedRect(margin, y, contentW, 10, 1.5, 1.5, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(...colors.text);
+      doc.text(name, margin + 4, y + 4);
+      if (sub) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(...colors.muted);
+        doc.text(sub, margin + 4, y + 8);
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(...colors.orange);
+      doc.text('x' + count, margin + contentW - 28, y + 5, { align: 'right' });
+      doc.setTextColor(...colors.gold);
+      doc.text('Rs.' + revenue, margin + contentW - 2, y + 5, { align: 'right' });
+      if (profitLine) {
+        doc.setFontSize(6);
+        doc.setTextColor(profitLine.pos ? colors.cyan[0] : colors.red[0], profitLine.pos ? colors.cyan[1] : colors.red[1], profitLine.pos ? colors.cyan[2] : colors.red[2]);
+        doc.text('profit: Rs.' + profitLine.val, margin + contentW - 2, y + 9, { align: 'right' });
+      }
+      y += 12;
+    }
+
+    function couponRow(name, count) {
+      checkPage(10);
+      doc.setFillColor(10, 7, 4);
+      doc.setDrawColor(...colors.border);
+      doc.setLineWidth(0.25);
+      doc.roundedRect(margin, y, contentW, 8, 1.5, 1.5, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(...colors.text);
+      doc.text(name, margin + 4, y + 5.5);
+      doc.setTextColor(...colors.green);
+      doc.text('x' + count, margin + contentW - 4, y + 5.5, { align: 'right' });
+      y += 10;
+    }
+
+    // ===== PULL DATA =====
+    const s = getSalesState();
+    const costs = getCostState();
+    const invState = getInvState();
+    const all = calcStats('all');
+    const s1  = calcStats('stall1');
+    const s2  = calcStats('stall2');
+    const invValue = calcInventoryValue();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+    const timeStr = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+
+    // ===== PAGE 1: COVER =====
+    doc.setFillColor(...colors.bg);
+    doc.rect(0, 0, pageW, pageH, 'F');
+
+    // Header stripe
+    doc.setFillColor(...colors.orange);
+    doc.rect(0, 0, pageW, 38, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Plot Twist POS', margin, 18);
+    doc.setFontSize(10);
+    doc.setTextColor(255, 220, 160);
+    doc.text('Business Report', margin, 27);
+    doc.setFontSize(8);
+    doc.setTextColor(255, 200, 120);
+    doc.text('Generated: ' + dateStr + '  ' + timeStr, margin, 34);
+
+    y = 48;
+
+    // --- OVERVIEW CARD ---
+    doc.setFillColor(...colors.card);
+    doc.setDrawColor(...colors.border);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(margin, y, contentW, 8, 2, 2, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.gold);
+    doc.text('COMBINED OVERVIEW', margin + 4, y + 5.5);
+    y += 11;
+
+    // Big revenue
+    checkPage(20);
+    doc.setFillColor(10, 7, 4);
+    doc.setDrawColor(...colors.border);
+    doc.roundedRect(margin, y, contentW, 18, 2, 2, 'FD');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...colors.muted);
+    doc.text('TOTAL REVENUE (AFTER DISCOUNTS)', margin + 4, y + 6);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(...colors.green);
+    doc.text('Rs.' + all.revenue, margin + 4, y + 15);
+    y += 21;
+
+    twoStatBoxes('Transactions', all.transactions, colors.orange, 'Coupons Saved', 'Rs.' + all.couponsSaved, [167, 139, 250]);
+    twoStatBoxes('Gross Revenue', 'Rs.' + (all.revenue + all.couponsSaved), colors.gold, all.hasCost ? 'Total Cost' : 'Cost Data', all.hasCost ? 'Rs.' + all.totalCost : 'Not Set', colors.red);
+
+    if (all.profit !== null) {
+      const profCol = all.profit >= 0 ? colors.cyan : colors.red;
+      statBox('Profit (Revenue - Cost) | Margin: ' + (all.revenue > 0 ? ((all.profit/all.revenue)*100).toFixed(1) : 0) + '%', 'Rs.' + Math.abs(all.profit), profCol, true);
+    }
+    if (invValue > 0) {
+      statBox('Inventory Value (on hand)', 'Rs.' + invValue, [167, 139, 250], true);
+    }
+
+    y += 2;
+    divider();
+
+    // --- PER STALL ---
+    sectionTitle('Per Stall Breakdown');
+    twoStatBoxes('Food Stall Revenue', 'Rs.' + s1.revenue, colors.green, 'Quest Stall Revenue', 'Rs.' + s2.revenue, colors.orange);
+    twoStatBoxes('Food Transactions', s1.transactions, colors.gold, 'Quest Transactions', s2.transactions, colors.gold);
+    if (s1.profit !== null || s2.profit !== null) {
+      twoStatBoxes(
+        'Food Profit', s1.profit !== null ? 'Rs.' + s1.profit : 'N/A', s1.profit >= 0 ? colors.cyan : colors.red,
+        'Quest Profit', s2.profit !== null ? 'Rs.' + s2.profit : 'N/A', s2.profit >= 0 ? colors.cyan : colors.red
+      );
+    }
+
+    // ===== PAGE 2: ITEM BREAKDOWN =====
+    addPage();
+
+    doc.setFillColor(...colors.card);
+    doc.setDrawColor(...colors.border);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(margin, y, contentW, 8, 2, 2, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.gold);
+    doc.text('ITEM BREAKDOWN — ALL STALLS', margin + 4, y + 5.5);
+    y += 11;
+
+    const allDetails = all.details;
+    if (allDetails.length === 0) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...colors.muted);
+      doc.text('No sales recorded yet.', margin + 4, y + 6);
+      y += 12;
+    } else {
+      // Food items
+      const foodDetails = allDetails.filter(d => FOOD_ITEMS.crunch.concat(FOOD_ITEMS.chaat, FOOD_ITEMS.specials, FOOD_ITEMS.drinks).some(f => f.id === d.id));
+      if (foodDetails.length > 0) {
+        sectionTitle('Food Stall Items', colors.green);
+        foodDetails.forEach(d => {
+          const sub = d.discounted > 0 ? '-Rs.' + d.discounted + ' coupons' : null;
+          const pLine = d.itemCost !== null ? { pos: (d.net - d.itemCost) >= 0, val: d.net - d.itemCost } : null;
+          itemRow(d.name, sub, d.cnt, d.net, pLine);
+        });
+        y += 2;
+      }
+
+      // Quest items
+      const questDetails = allDetails.filter(d => !foodDetails.includes(d));
+      if (questDetails.length > 0) {
+        sectionTitle('Quest Stall Items', colors.orange);
+        questDetails.forEach(d => {
+          const sub = d.discounted > 0 ? '-Rs.' + d.discounted + ' coupons' : null;
+          const pLine = d.itemCost !== null ? { pos: (d.net - d.itemCost) >= 0, val: d.net - d.itemCost } : null;
+          itemRow(d.name, sub, d.cnt, d.net, pLine);
+        });
+      }
+    }
+
+    // Coupons Issued
+    const couponIssued = QUEST_ITEMS.coupons.map(c => ({ ...c, cnt: s.counts[c.id]||0 })).filter(c => c.cnt > 0);
+    if (couponIssued.length > 0) {
+      y += 2; divider();
+      sectionTitle('Coupons Issued (Quest Stall)', colors.green);
+      couponIssued.forEach(c => couponRow(c.name, c.cnt));
+    }
+
+    // Drinks for specials
+    const drinkCounts = s.drink_counts || {};
+    const specialDrinkRows = [];
+    SPECIAL_WITH_DRINK.forEach(sid => {
+      const item = ALL_ITEMS[sid];
+      if (!item) return;
+      const dc = drinkCounts[sid];
+      if (!dc) return;
+      DRINK_OPTIONS.forEach(d => {
+        const cnt = dc[d.id] || 0;
+        if (cnt > 0) specialDrinkRows.push({ special: item.name, drink: d.label, cnt });
+      });
+    });
+    if (specialDrinkRows.length > 0) {
+      y += 2; divider();
+      sectionTitle('Drinks Taken with Specials', [56, 189, 248]);
+      specialDrinkRows.forEach(r => couponRow(r.drink + ' (with ' + r.special + ')', r.cnt));
+    }
+
+    // ===== PAGE 3: COST & INVENTORY =====
+    const hasCostData = Object.values(costs).some(v => v !== '' && !isNaN(Number(v)) && Number(v) > 0);
+    const hasInvData = Object.values(invState).some(v => (v.qty && Number(v.qty) > 0) || (v.cost && Number(v.cost) > 0));
+
+    if (hasCostData || hasInvData) {
+      addPage();
+
+      if (hasCostData) {
+        doc.setFillColor(...colors.card);
+        doc.setDrawColor(...colors.border);
+        doc.roundedRect(margin, y, contentW, 8, 2, 2, 'FD');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(...colors.gold);
+        doc.text('COST PRICE SETTINGS', margin + 4, y + 5.5);
+        y += 11;
+
+        COST_ITEMS.forEach(cat => {
+          const catItems = cat.items.filter(it => costs[it.id] !== undefined && costs[it.id] !== '' && !isNaN(Number(costs[it.id])));
+          if (catItems.length === 0) return;
+          checkPage(8);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7.5);
+          doc.setTextColor(...colors.orange);
+          doc.text(cat.category, margin + 2, y + 4);
+          y += 7;
+          catItems.forEach(it => {
+            checkPage(9);
+            doc.setFillColor(10, 7, 4);
+            doc.setDrawColor(...colors.border);
+            doc.roundedRect(margin, y, contentW, 7, 1.5, 1.5, 'FD');
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(...colors.text);
+            doc.text(it.name, margin + 4, y + 4.5);
+            doc.setTextColor(...colors.muted);
+            doc.text('Sell: Rs.' + it.price, margin + contentW - 40, y + 4.5);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(...colors.gold);
+            doc.text('Cost: Rs.' + Number(costs[it.id]), margin + contentW - 4, y + 4.5, { align: 'right' });
+            y += 9;
+          });
+          y += 2;
+        });
+      }
+
+      if (hasInvData) {
+        y += 2; divider();
+        doc.setFillColor(...colors.card);
+        doc.setDrawColor(...colors.border);
+        doc.roundedRect(margin, y, contentW, 8, 2, 2, 'FD');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor([167, 139, 250][0], [167, 139, 250][1], [167, 139, 250][2]);
+        doc.text('INVENTORY ON HAND', margin + 4, y + 5.5);
+        y += 11;
+
+        let grandInv = 0;
+        COST_ITEMS.forEach(cat => {
+          cat.items.forEach(it => {
+            const inv = invState[it.id] || {};
+            const qty = Number(inv.qty) || 0;
+            const cost = Number(inv.cost) || 0;
+            if (qty === 0 && cost === 0) return;
+            checkPage(9);
+            const total = qty * cost;
+            grandInv += total;
+            doc.setFillColor(10, 7, 4);
+            doc.setDrawColor(...colors.border);
+            doc.roundedRect(margin, y, contentW, 7, 1.5, 1.5, 'FD');
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(...colors.text);
+            doc.text(it.name, margin + 4, y + 4.5);
+            doc.setTextColor(...colors.muted);
+            doc.text('Qty: ' + qty, margin + contentW - 52, y + 4.5);
+            doc.text('@ Rs.' + cost, margin + contentW - 30, y + 4.5);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(167, 139, 250);
+            doc.text('Rs.' + total, margin + contentW - 4, y + 4.5, { align: 'right' });
+            y += 9;
+          });
+        });
+
+        // Grand total
+        checkPage(14);
+        doc.setFillColor(13, 10, 26);
+        doc.setDrawColor(42, 26, 58);
+        doc.roundedRect(margin, y, contentW, 12, 2, 2, 'FD');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(...colors.muted);
+        doc.text('Total Inventory Value', margin + 4, y + 7.5);
+        doc.setFontSize(14);
+        doc.setTextColor(167, 139, 250);
+        doc.text('Rs.' + grandInv, margin + contentW - 4, y + 8.5, { align: 'right' });
+        y += 15;
+      }
+    }
+
+    // ===== FOOTER on last page =====
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(...colors.muted);
+      doc.text('Plot Twist POS  •  Page ' + i + ' of ' + totalPages + '  •  ' + dateStr, pageW / 2, pageH - 6, { align: 'center' });
+    }
+
+    // Save
+    const filename = 'PlotTwist_Report_' + now.toISOString().slice(0,10) + '.pdf';
+    doc.save(filename);
+    showToast('PDF downloaded ✓');
+  } catch (err) {
+    console.error(err);
+    showToast('PDF error — try again');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-icon">📄</span> Download Business Report (PDF)';
+  }
+}
+
+// Expose functions referenced by inline onclick="" handlers in the HTML —
+// everything else stays safely local to this IIFE instead of leaking globally.
+Object.assign(window, {
+  showPage, doSetup, attemptLogin, logout, togglePw,
+  setAdminSubTab, setAdminTab, downloadBusinessPDF,
+  initResetConfirm, doReset, cancelReset,
+  toggleCostLock, saveCostPrices, toggleInvLock, saveInventory, updateInvTotal,
+  closeModal, closeModalOutside, confirmModal, toggleCoupon, updateCouponUI,
+  addNewUser, startEditUser, saveUserEdit, cancelUserEdit, deleteUser,
+  showGreatAdminDeleteModal, confirmGreatAdminDelete,
+  openProfileModal, closeProfileModal, saveProfileChanges, openProfileForgot, submitProfileForgot,
+  openLoginForgot, submitLoginForgot, resolveRequest,
+  setAccInnerTab, markRequestResolved,
+});
+
+(async function boot() {
+  // Pull all cloud data first (sales, costs, inventory, etc.),
+  // then subscribe for real-time, then handle auth.
+  // authInit does its own live fetch of pt_users specifically for auth decisions.
+  await cloudPullAll();
+  cloudSubscribe();
+  authInit();
+  // #10 — Polling fallback: check for force-logout every 30 s, independent of
+  // the realtime websocket. This ensures the target device is logged out even
+  // if realtime is disconnected or lagging.
+  setInterval(() => { if (currentUser) checkForceLogout(); }, 30000);
+})();
+})();
+</script>
+</body>
+</html>
